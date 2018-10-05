@@ -12,7 +12,7 @@ Imports:
   seqinr,
   phangorn
 Depends:
-  R (>= 3.3.1)
+  R (>= 3.3.1),
   ape
 License: MIT + file LICENSE
 Encoding: UTF-8
