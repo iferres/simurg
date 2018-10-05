@@ -10,7 +10,8 @@ Authors@R: c(
 Maintainer: <iferres@pasteur.edu.uy>
 Imports: 
   seqinr,
-  phangorn
+  phangorn,
+  stats
 Depends:
   R (>= 3.3.1),
   ape

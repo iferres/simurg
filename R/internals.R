@@ -5,6 +5,7 @@
 
 ## Simulate gene gain and loss
 #' @importFrom phangorn Descendants
+#' @importFrom stats runif rpois
 #' @author Ignacio Ferres
 .sim_gl <- function(phy, m, depth, brti, ne, norg, ngenes, theta, rho){
 
@@ -122,6 +123,7 @@
 
 ## Simulate mutations
 #' @importFrom phangorn Ancestors
+#' @importFrom stats runif rpois
 #' @author Ignacio Ferres
 .sim_mut <- function(phy, genes, m, depth, brti, ne, norg, ngenes, mu, smat){
 
