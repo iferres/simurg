@@ -129,7 +129,7 @@
 
   if (missing(smat)){
 
-    smat <- pansimulatoR:::.codon.subst.mat
+    smat <- .codon.subst.mat
 
   }
 

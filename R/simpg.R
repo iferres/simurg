@@ -115,7 +115,7 @@ simpg <- function(ref='pan_genome_reference.fa',
 
   }else{
 
-    smat <- pansimulatoR:::.codon.subst.mat
+    smat <- .codon.subst.mat
 
   }
 
