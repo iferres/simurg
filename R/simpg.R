@@ -50,7 +50,7 @@
 #' @importFrom ape rcoal coalescent.intervals branching.times
 #' @importFrom phangorn Descendants
 #' @author Ignacio Ferres
-
+#' @export
 simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
                   ngenes=100,
