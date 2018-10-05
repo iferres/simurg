@@ -1,4 +1,25 @@
-#' @param ref A fasta file from where to sample genes.
+#' @name simpg
+#' @title Simulate a bacterial pangenome
+#' @description Simulate the evolution of a pangenome using a random coalescent
+#' tree as guide, according to the neutral model and the Infinite Many Genes
+#' (IMG) model.
+#' The algorithm first simulates a random coalescent tree (\link[ape]{rcoal}).
+#'
+#' Then, random deviates from the expected number of gene gain and loss
+#' according to branch length and parameters (\code{theta} and \code{rho}), are
+#' used to simulate gene birth and death along the tree. Since the IMG model is
+#' used, genes are only transmited vertically from generation to generation.
+#'
+#' Point mutations are simulated following a similar process as the above:
+#' random deviates from the expected number of mutations according to branch
+#' length and mutation rate, are used. Mutations are then distributed along
+#' sites with uniform probability. By default stop codons are avoided. (note:
+#' actually, codons and not sites are conditioned to mutation. See \code{smat}
+#' parameter below).
+#'
+#' Finally, sequences are sampled from \code{ref} and a pangenome is generated
+#' following the evolutionary history simulated above.
+#' @param ref A multi-fasta file from where to sample genes.
 #' @param norg The number of organisms sampled.
 #' @param ngenes The number of genes the MRCA will have.
 #' @param ne Effective population number. For E coli is ~25 million
@@ -8,10 +29,26 @@
 #' @param mu The per site per generation substitution rate.
 #' @param dir_out The non-existent directory where to put the simulated
 #' orthologous groups.
+#' @param smat A codon substitution matrix with probability weights for
+#' transition. It must be a \code{data.frame} with \code{dim(smat) == c(64, 64)}, where
+#' column and row names are the possible combination of codons (i.e. "aaa",
+#' "taa", "caa", etc). The values in the \code{data.frame} correspond to probability
+#' weights for obtaining the elements of the vector being sampled. See
+#' \link[base]{sample} for more information. The default is a transition matrix
+#' with 0 probability of transition from a coding codon to any stop codon and to
+#' itself, and equal probability weights of transition to any other codon which
+#' differ in, at most, one base (point mutations; one site per codon at most is
+#' mutated each time). If you want to use a different codon matrix, I recommend
+#' to use the default as reference: \code{pansimulatoR:::.codon.subst.mat} .
+#' See package source (R/subs_mat.R) for a guide on how to generate a similat
+#' matrix.
 #' @return A \code{list} of length 4. (1) The coalescent phylogenetic tree, (2)
 #' a \code{data.frame} with the gene gain-loss events, (3) a \code{data.frame}
 #' with the substitution events, and (4) the panmatrix. Also a series of
 #' attributes are also returned.
+#' @importFrom seqinr read.fasta write.fasta
+#' @importFrom ape rcoal coalescent.intervals branching.times
+#' @importFrom phangorn Descendants
 #' @author Ignacio Ferres
 
 simpg <- function(ref='pan_genome_reference.fa',
@@ -21,7 +58,8 @@ simpg <- function(ref='pan_genome_reference.fa',
                   theta = 2e-6,
                   rho = 1e-6,
                   mu = 5e-10,
-                  dir_out='sim_pg'){
+                  dir_out='sim_pg',
+                  smat){
 
   #################
   ## Check input ##
@@ -45,6 +83,41 @@ simpg <- function(ref='pan_genome_reference.fa',
     stop('dir_out already exists')
   }
 
+
+  if (!missing(smat)){
+
+    if (!all(dim(smat) == c(64, 64))){
+      stop('smat must have dim(smat) == c(64, 64)')
+    }
+
+    if (class(smat)!='data.frame'){
+      stop('smat must be a data.frame')
+    }
+
+    crnames <- c("aaa", "taa", "caa", "gaa", "ata", "tta", "cta", "gta", "aca",
+                 "tca", "cca", "gca", "aga", "tga", "cga", "gga", "aat", "tat",
+                 "cat", "gat", "att", "ttt", "ctt", "gtt", "act", "tct", "cct",
+                 "gct", "agt", "tgt", "cgt", "ggt", "aac", "tac", "cac", "gac",
+                 "atc", "ttc", "ctc", "gtc", "acc", "tcc", "ccc", "gcc", "agc",
+                 "tgc", "cgc", "ggc", "aag", "tag", "cag", "gag", "atg", "ttg",
+                 "ctg", "gtg", "acg", "tcg", "ccg", "gcg", "agg", "tgg", "cgg",
+                 "ggg")
+
+    if (!all(colnames(smat)%in%crnames)){
+      stop('smat incorrect format: column and row names must be possible codons.
+           See ?simpg , or pansimulatoR:::.codon.subst.mat as reference')
+    }
+
+    if (!all(rownames(smat)%in%crnames)){
+      stop('smat incorrect format: column and row names must be possible codons.
+           See ?simpg , or pansimulatoR:::.codon.subst.mat as reference')
+    }
+
+  }else{
+
+    smat <- pansimulatoR:::.codon.subst.mat
+
+  }
 
   ##############################
   ## Load reference sequences ##
@@ -131,7 +204,8 @@ simpg <- function(ref='pan_genome_reference.fa',
                     ne = ne,
                     norg = norg,
                     ngenes = ngenes,
-                    mu = mu)
+                    mu = mu,
+                    smat = smat)
 
   ########################
   ## Generate sequences ##

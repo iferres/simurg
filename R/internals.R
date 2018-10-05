@@ -4,6 +4,8 @@
 ###############################################################################
 
 ## Simulate gene gain and loss
+#' @importFrom phangorn Descendants
+#' @author Ignacio Ferres
 .sim_gl <- function(phy, m, depth, brti, ne, norg, ngenes, theta, rho){
 
 
@@ -119,7 +121,15 @@
 
 
 ## Simulate mutations
-.sim_mut <- function(phy, genes, m, depth, brti, ne, norg, ngenes, mu){
+#' @importFrom phangorn Ancestors
+#' @author Ignacio Ferres
+.sim_mut <- function(phy, genes, m, depth, brti, ne, norg, ngenes, mu, smat){
+
+  if (missing(smat)){
+
+    smat <- pansimulatoR:::.codon.subst.mat
+
+  }
 
   # Count total number of sites.
   nsites <- sum(sapply(genes, length))
@@ -170,13 +180,13 @@
 
 
   # Mutate positions according Jukes-Cantor model (??? sort of...).
-  ncodon <- colnames(.codon.subst.mat)
+  ncodon <- colnames(smat)
   dfmut$change.to <- sapply(dfmut$change.from,
-                            function(x, ncodon, .codon.subst.mat) {
-                              sample(ncodon, 1, prob = .codon.subst.mat[,x])
+                            function(x, ncodon, smat) {
+                              sample(ncodon, 1, prob = smat[,x])
                             },
                             ncodon = ncodon,
-                            .codon.subst.mat = .codon.subst.mat)
+                            smat = smat)
 
 
   # Correct multiples changes on same position if first change affect the branch
@@ -195,7 +205,7 @@
         #branch and position are ancestral?
         if (all(a1 %in% a2)){
           dfmut$change.from[aa[j]] <- dfmut$change.to[aa[K]]
-          dfmut$change.to[aa[j]] <- sample(ncodon, 1, prob = .codon.subst.mat[,dfmut$change.from[aa[j]]])
+          dfmut$change.to[aa[j]] <- sample(ncodon, 1, prob = smat[,dfmut$change.from[aa[j]]])
           K <- 0
         }else{
           K <- ifelse(K==1, 0, K-1)
