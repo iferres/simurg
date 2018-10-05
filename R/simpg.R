@@ -40,12 +40,12 @@
 #' differ in, at most, one base (point mutations; one site per codon at most is
 #' mutated each time). If you want to use a different codon matrix, I recommend
 #' to use the default as reference: \code{pansimulatoR:::.codon.subst.mat} .
-#' See package source (R/subs_mat.R) for a guide on how to generate a similat
+#' See package source (R/subs_mat.R) for a guide on how to generate a similar
 #' matrix.
 #' @return A \code{list} of length 4. (1) The coalescent phylogenetic tree, (2)
 #' a \code{data.frame} with the gene gain-loss events, (3) a \code{data.frame}
 #' with the substitution events, and (4) the panmatrix. Also a series of
-#' attributes are also returned.
+#' attributes are returned.
 #' @importFrom seqinr read.fasta write.fasta
 #' @importFrom ape rcoal coalescent.intervals branching.times
 #' @importFrom phangorn Descendants
