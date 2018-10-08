@@ -1,15 +1,8 @@
-pansimulatoR
-================
-I Ferrés
-October 8, 2018
-
-Simulate a bacterial pangenome in R
------------------------------------
+# pansimulatoR: Simulate a bacterial pangenome in R
 
 This R package is intended to produce simulated pangenomes using reference sequences as starting point (MRCA), and both Neutral \[1\] and Infinitely Many Genes (IMG) \[2\] models to produce changes along branches of a simulated coalescent tree.
 
-Implementation
---------------
+## Implementation
 
 The algorithm first simulates a random coalescent tree.
 
@@ -19,8 +12,7 @@ Point mutations are simulated following a similar process as the above: random d
 
 Finally, sequences are sampled from a reference multi-fasta file, and a pangenome is generated following the evolutionary history simulated previously.
 
-Example
--------
+## Example
 
 First load package and decompress the attached reference sequences (for tutorial purposes only).
 
@@ -39,7 +31,7 @@ tgz <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'pansimulatoR')
 tgz
 ```
 
-    ## [1] "/home/ignacio/R/x86_64-redhat-linux-gnu-library/3.3/pansimulatoR/extdata/ref_tutorial.tar.gz"
+    ## [1] "/home/user/R/x86_64-redhat-linux-gnu-library/3.3/pansimulatoR/extdata/ref_tutorial.tar.gz"
 
 ``` r
 ref <- untar(tarfile = tgz, list = T)
@@ -152,7 +144,7 @@ p$coalescent
 plot(p$coalescent)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-3-1.png)
+![](vignettes/fig_readme/coal_tree.png)
 
 The second element is a `data.frame` with the simulated history of gene gain (G) and loss (L) events along the tree.
 
