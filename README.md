@@ -221,8 +221,9 @@ list.files(path = normalizePath(dir_out), full.names = TRUE)[1:5]
     ## [4] "/tmp/RtmpOk92QC/sim_pg/gene101.fasta"
     ## [5] "/tmp/RtmpOk92QC/sim_pg/gene102.fasta"
 
-Some thoughts on parameter selection
-------------------------------------
+## Some thoughts on parameter selection
+
+-   **ref** is a multi-fasta file. As example of well suited reference file, the [roary](https://sanger-pathogens.github.io/Roary/) `pan_genome_reference.fa` file is recommended, where one representative gene per cluster is returned.
 
 -   **norg** is the number of sampled organisms. In other words, is the number of final organisms your pangenome will have.
 
@@ -234,8 +235,8 @@ Some thoughts on parameter selection
 
 -   **mu** is the per site per generation substitution rate. According to \[4\], a typical bacterial substitution rate is around 1e-5 and 1e-9 per site per annum. Taking, e.g., 1e-7 substitutions per site per annum, and assuming 200 generations per annum \[5\]: 1e-7 / 200 = 5e-10 substitutions per site per generation, which was taken as default.
 
-References
-----------
+## References
+
 
 \[1\] Kimura, M. (1983). **The neutral theory of molecular evolution.** *Cambridge.*
 
