@@ -214,13 +214,13 @@ simpg <- function(ref='pan_genome_reference.fa',
 
   # Takes the mut data.frame and applies substitutions cronologically to each
   # gene. Then removes sequences according the final panmatrix.
-
   rownames(dfgl) <- 1:(dim(dfgl)[1])
   dd <- dim(mmmut[[1]])
   rownames(mmmut[[1]]) <- 1:(dd[1])
   change.from <- vector('character', dd[1])
   change.to <- vector('character', dd[1])
   allcodons <- dimnames(smat)[[1]]
+  allDes <- Descendants(phy, type = 'tips')
 
   cat(paste0('Writing groups of orthologous at "', dir_out, '" .\n'))
   dir.create(dir_out)
@@ -236,9 +236,11 @@ simpg <- function(ref='pan_genome_reference.fa',
     names(og) <- paste0(phy$tip.label, '_', gna, ' ref:', nn)
 
     for (j in seq_len(dim(ch)[1])){
-      dsc <- Descendants(phy, ch[j, 3L])[[1]]
+      # dsc <- Descendants(phy, ch[j, 3L])[[1]]
+      # dsc <- phangorn:::bip(phy)[ch[j, 3L]][[1]]
+      dsc <- allDes[[ch[j, 3L]]]
       change.from[rns[j]] <- og[[dsc[1]]][ch[j, 5]]
-      change.to[rns[j]] <- sample(allcodons, 1, prob = smat[,change.from[rns[j]]])
+      change.to[rns[j]] <- sample(allcodons, 1, prob = .subset2(smat, change.from[rns[j]]))
       for (k in seq_along(dsc)){
         og[[dsc[k]]][ch[j, 5L]] <- change.to[rns[j]]
       }
