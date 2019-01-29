@@ -50,7 +50,7 @@
 #' @importFrom ape rcoal coalescent.intervals branching.times
 #' @importFrom phangorn Descendants
 #' @author Ignacio Ferres
-#'  @export
+#' @export
 simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
                   ngenes=100,
@@ -158,13 +158,13 @@ simpg <- function(ref='pan_genome_reference.fa',
   ## Simulate gene gain and loss ##
   #################################
 
-  #' On this step, gene birth and death is simulated in order to obtain a
-  #' panmatrix at the end of this stage (IMG model).
-  #' norg : number of organisms to sample.
-  #' ngenes : number of *starting* genes at the MRCA.
-  #' phy : simulated coalescent tree.
-  #' theta : gene gain rate per generation.
-  #' rho : gene loss rate per generation.
+  # On this step, gene birth and death is simulated in order to obtain a
+  # panmatrix at the end of this stage (IMG model).
+  # norg : number of organisms to sample.
+  # ngenes : number of *starting* genes at the MRCA.
+  # phy : simulated coalescent tree.
+  # theta : gene gain rate per generation.
+  # rho : gene loss rate per generation.
 
   cat('Simulating gene gain and loss.\n')
   gl <- .sim_gl(phy = phy,
@@ -189,11 +189,11 @@ simpg <- function(ref='pan_genome_reference.fa',
   ## Simulate mutation ##
   #######################
 
-  #' On this step, mutation is simulated according the neutral model. The
-  #' output is a set of sequences evolved from a common ancestor for ne
-  #' generations at a given substitution rate. Mutations generated avoid stop
-  #' codons.
-  #' mu : substitution rate per site per generation.
+  # On this step, mutation is simulated according the neutral model. The
+  # output is a set of sequences evolved from a common ancestor for ne
+  # generations at a given substitution rate. Mutations generated avoid stop
+  # codons.
+  # mu : substitution rate per site per generation.
 
   cat('Simulating point mutations.\n')
   mmmut <- .sim_mut(phy = phy,
@@ -212,8 +212,8 @@ simpg <- function(ref='pan_genome_reference.fa',
   ## Generate sequences ##
   ########################
 
-  #' Takes the mut data.frame and applies substitutions cronologically to each
-  #' gene. Then removes sequences according the final panmatrix.
+  # Takes the mut data.frame and applies substitutions cronologically to each
+  # gene. Then removes sequences according the final panmatrix.
 
   rownames(dfgl) <- 1:(dim(dfgl)[1])
   dd <- dim(mmmut[[1]])
@@ -264,9 +264,9 @@ simpg <- function(ref='pan_genome_reference.fa',
   ## Return ##
   ############
 
-  #' Return a list with a coalescent tree, a data.frame representing the
-  #' gain-loss events, another one representing mutation events, and the final
-  #' panmatrix. Also some attributes regarding input parameters are returned.
+  # Return a list with a coalescent tree, a data.frame representing the
+  # gain-loss events, another one representing mutation events, and the final
+  # panmatrix. Also some attributes regarding input parameters are returned.
 
   out <- list(phy, dfgl, dfmut, pm)
   names(out) <- c('coalescent', 'gain-loss', 'substitutions', 'panmatrix')
