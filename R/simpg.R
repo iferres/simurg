@@ -196,7 +196,7 @@ simpg <- function(ref='pan_genome_reference.fa',
   #' mu : substitution rate per site per generation.
 
   cat('Simulating point mutations.\n')
-  dfmut <- .sim_mut(phy = phy,
+  mmmut <- .sim_mut(phy = phy,
                     genes = genes,
                     m = m,
                     depth = depth,
@@ -207,6 +207,7 @@ simpg <- function(ref='pan_genome_reference.fa',
                     mu = mu,
                     smat = smat)
 
+
   ########################
   ## Generate sequences ##
   ########################
@@ -215,7 +216,11 @@ simpg <- function(ref='pan_genome_reference.fa',
   #' gene. Then removes sequences according the final panmatrix.
 
   rownames(dfgl) <- 1:(dim(dfgl)[1])
-  rownames(dfmut) <- 1:(dim(dfmut)[1])
+  dd <- dim(mmmut[[1]])
+  rownames(mmmut[[1]]) <- 1:(dd[1])
+  change.from <- vector('character', dd[1])
+  change.to <- vector('character', dd[1])
+  allcodons <- dimnames(smat)[[1]]
 
   cat(paste0('Writing groups of orthologous at "', dir_out, '" .\n'))
   dir.create(dir_out)
@@ -224,15 +229,18 @@ simpg <- function(ref='pan_genome_reference.fa',
     ge <- genes[[i]]
     nn <- attr(ge, 'name')
     ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
-    ch <- dfmut[which(dfmut$gene==nn),]
+    ch <- mmmut[[1]][which(mmmut[[2]]==nn),]
+    rns <- as.integer(rownames(ch))
     gna <- colnames(pm)[i]
     og <- rep(list(ge), norg)
     names(og) <- paste0(phy$tip.label, '_', gna, ' ref:', nn)
 
     for (j in seq_len(dim(ch)[1])){
-      dsc <- Descendants(phy, ch$to.node[j])[[1]]
+      dsc <- Descendants(phy, ch[j, 3L])[[1]]
+      change.from[rns[j]] <- og[[dsc[1]]][ch[j, 5]]
+      change.to[rns[j]] <- sample(allcodons, 1, prob = smat[,change.from[rns[j]]])
       for (k in seq_along(dsc)){
-        og[[dsc[k]]][ch$gene.codon.pos[j]] <- ch$change.to[j]
+        og[[dsc[k]]][ch[j, 5L]] <- change.to[rns[j]]
       }
     }
 
@@ -247,7 +255,10 @@ simpg <- function(ref='pan_genome_reference.fa',
                 file.out = paste0(dir_out, '/', gna,'.fasta'))
   }
 
-
+  dfmut <- as.data.frame(mmmut[[1]])
+  dfmut$change.from <- change.from
+  dfmut$change.to <- change.to
+  dfmut$gene <- mmmut[[2]]
 
   ############
   ## Return ##

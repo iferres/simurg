@@ -164,69 +164,79 @@
     }
 
   })
-  dfmut <- as.data.frame(do.call(rbind, dfmut), stringsAsFactors = FALSE)
-  colnames(dfmut) <- c('generation', 'from.node', 'to.node')
-  dfmut$generation <- as.integer(dfmut$generation)
-  dfmut$from.node <- as.integer(dfmut$from.node)
-  dfmut$to.node <- as.integer(dfmut$to.node)
-  dfmut <- dfmut[order(dfmut$generation, decreasing = TRUE),]
-  dfmut$position <- as.integer(round(runif(dim(dfmut)[1], min = 1, max = nsites)))
-  dfmut$codon.pos <- ceiling(dfmut$position/3)
+
+  dfmut <- do.call(rbind, dfmut)
+  dd <- dim(dfmut)
+  dfmut <- as.integer(dfmut)
+  attributes(dfmut) <- list(dim=dd,
+                            dimnames=list(NULL,
+                                          c('generation',
+                                            'from.node',
+                                            'to.node')))
+
+  dfmut <- dfmut[order(dfmut[, 1], decreasing = TRUE),]
+  position <- as.integer(round(runif(dim(dfmut)[1], min = 1, max = nsites)))
+  codon.pos <- as.integer(ceiling(position/3))
+  dfmut <- cbind(dfmut, position, codon.pos)
 
   # codones <- strsplit(paste0(genes, collapse = ''), "(?<=.{3})", perl = TRUE)[[1]]
   codones <- lapply(genes, function(x){
     paste0(x[c(T,F,F)], x[c(F,T,F)], x[c(F,F,T)])
   })
   codones <- unlist(codones)
-  dfmut$change.from <- codones[dfmut$codon.pos]
+  # names(codones) <- NULL
 
 
-  # Mutate positions according Jukes-Cantor model (??? sort of...).
-  ncodon <- colnames(smat)
-  dfmut$change.to <- sapply(dfmut$change.from,
-                            function(x, ncodon, smat) {
-                              sample(ncodon, 1, prob = smat[,x])
-                            },
-                            ncodon = ncodon,
-                            smat = smat)
-
-
-  # Correct multiples changes on same position if first change affect the branch
-  # of the second.
-  dups <- duplicated(dfmut$codon.pos) | duplicated(dfmut$codon.pos, fromLast = TRUE)
-  un <- unique(dfmut$codon.pos[dups])
-  for (i in seq_along(un)){
-    aa <- which(dfmut$codon.pos==un[i])
-    for (j in 2:length(aa)){
-      K <- j - 1
-      while(K>0){
-        ab <- dfmut[aa[K], ]
-        a1 <- c(Ancestors(phy, ab$to.node), ab$to.node)
-        ac <- dfmut[aa[j], ]
-        a2 <- c(Ancestors(phy, ac$to.node), ac$to.node)
-        #branch and position are ancestral?
-        if (all(a1 %in% a2)){
-          dfmut$change.from[aa[j]] <- dfmut$change.to[aa[K]]
-          dfmut$change.to[aa[j]] <- sample(ncodon, 1, prob = smat[,dfmut$change.from[aa[j]]])
-          K <- 0
-        }else{
-          K <- ifelse(K==1, 0, K-1)
-        }
-      }
-    }
-  }
+  # dfmut$change.from <- codones[dfmut$codon.pos]
+  #
+  #
+  # # Mutate positions according Jukes-Cantor model (??? sort of...).
+  # ncodon <- colnames(smat)
+  # dfmut$change.to <- sapply(dfmut$change.from,
+  #                           function(x, ncodon, smat) {
+  #                             sample(ncodon, 1, prob = smat[,x])
+  #                           },
+  #                           ncodon = ncodon,
+  #                           smat = smat)
+  #
+  #
+  # # Correct multiples changes on same position if first change affect the branch
+  # # of the second.
+  # dups <- duplicated(dfmut$codon.pos) | duplicated(dfmut$codon.pos, fromLast = TRUE)
+  # un <- unique(dfmut$codon.pos[dups])
+  # for (i in seq_along(un)){
+  #   aa <- which(dfmut$codon.pos==un[i])
+  #   for (j in 2:length(aa)){
+  #     K <- j - 1
+  #     while(K>0){
+  #       ab <- dfmut[aa[K], ]
+  #       a1 <- c(Ancestors(phy, ab$to.node), ab$to.node)
+  #       ac <- dfmut[aa[j], ]
+  #       a2 <- c(Ancestors(phy, ac$to.node), ac$to.node)
+  #       #branch and position are ancestral?
+  #       if (all(a1 %in% a2)){
+  #         dfmut$change.from[aa[j]] <- dfmut$change.to[aa[K]]
+  #         dfmut$change.to[aa[j]] <- sample(ncodon, 1, prob = smat[,dfmut$change.from[aa[j]]])
+  #         K <- 0
+  #       }else{
+  #         K <- ifelse(K==1, 0, K-1)
+  #       }
+  #     }
+  #   }
+  # }
 
   #Identify gene from absolute position. Identify relative position (in gene).
   gle <- sapply(genes, length)
   csu <- ceiling(cumsum(gle)/3)
-  dfmut$gene <- sapply(dfmut$codon.pos, function(x){names(which(csu>=x))[1]})
-  dfmut$gene.codon.pos <- sapply(dfmut$codon.pos, function(x){
-    ifelse(length(which(csu<=x)), x-csu[rev(which(csu<x))[1]], x)
-  })
+  gene <- vapply(dfmut[, 5L], function(x){names(which(csu>=x))[1]}, FUN.VALUE = NA_character_)
+  gene.codon.pos <- vapply(dfmut[, 5L], function(x){
+    ifelse(length(which(csu<=x)), as.integer(x-csu[rev(which(csu<x))[1]]), as.integer(x))
+  }, FUN.VALUE = NA_integer_)
 
-  dfmut$position <- NULL
+  dfmut <- dfmut[, -4L]
+  dfmut <- cbind(dfmut, gene.codon.pos)
 
-  return(dfmut)
+  return(list(dfmut, gene))
 }
 
 
