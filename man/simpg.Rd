@@ -70,4 +70,22 @@ following the evolutionary history simulated above.
 }
 \author{
 Ignacio Ferres
+ @export
+On this step, gene birth and death is simulated in order to obtain a
+panmatrix at the end of this stage (IMG model).
+norg : number of organisms to sample.
+ngenes : number of *starting* genes at the MRCA.
+phy : simulated coalescent tree.
+theta : gene gain rate per generation.
+rho : gene loss rate per generation.
+On this step, mutation is simulated according the neutral model. The
+output is a set of sequences evolved from a common ancestor for ne
+generations at a given substitution rate. Mutations generated avoid stop
+codons.
+mu : substitution rate per site per generation.
+Takes the mut data.frame and applies substitutions cronologically to each
+gene. Then removes sequences according the final panmatrix.
+Return a list with a coalescent tree, a data.frame representing the
+gain-loss events, another one representing mutation events, and the final
+panmatrix. Also some attributes regarding input parameters are returned.
 }
