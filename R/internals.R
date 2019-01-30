@@ -73,7 +73,7 @@
   df$generation <- as.integer(df$generation)
   df$from.node <- as.integer(df$from.node)
   df$to.node <- as.integer(df$to.node)
-  df$type <- as.factor(df$type)
+  # df$type <- as.factor(df$type)
   df <- df[order(df$generation, decreasing = TRUE), ]
 
   pm <- matrix(data = 1L,
@@ -82,12 +82,14 @@
                dimnames = list(paste0('genome', 1:norg),
                                paste0('gene', 1:ngenes)))
 
+  allDes <- Descendants(phy, type = 'tips')
+
   for (i in 1:dim(df)[1]){
     # If it is a gain, then add a new column with ones and zeros according the
     # descendants of the node where the gene was gained.
     if (df$type[i] == 'G'){
 
-      desc <- phy$tip.label[Descendants(phy, df$to.node[i])[[1]]]
+      desc <- phy$tip.label[allDes[[.subset2(df, c(3, i))]]]
       nwc <- rep(0, norg)
       nwc[as.integer(sub('genome','',desc))] <- 1L
       pm <- cbind(pm, nwc)
@@ -98,7 +100,7 @@
     } else {
 
       lo <- sample(colnames(pm), 1)
-      desc <- phy$tip.label[Descendants(phy, df$to.node[i])[[1]]]
+      desc <- phy$tip.label[allDes[[.subset2(df, c(3, i))]]]
       pm[as.integer(sub('genome','',desc)), lo] <- 0L
 
     }
@@ -229,10 +231,12 @@
   gle <- sapply(genes, length)
   csu <- ceiling(cumsum(gle)/3)
   gene <- vapply(dfmut[, 5L], function(x){names(which(csu>=x))[1]}, FUN.VALUE = NA_character_)
-  gene.codon.pos <- vapply(dfmut[, 5L], function(x){
-    ifelse(length(which(csu<=x)), as.integer(x-csu[rev(which(csu<x))[1]]), as.integer(x))
-  }, FUN.VALUE = NA_integer_)
-
+  gene.codon.ini.coord <- c(1L, csu[-length(csu)]+1L)
+  names(gene.codon.ini.coord) <- names(csu)
+  # gene.codon.pos <- vapply(dfmut[, 5L], function(x){
+  #   if (length(which(csu<=x))) as.integer(x-csu[rev(which(csu<x))[1]]) else as.integer(x)
+  # }, FUN.VALUE = NA_integer_)
+  gene.codon.pos <- dfmut[, 5L] - gene.codon.ini.coord[gene] + 1L
   dfmut <- dfmut[, -4L]
   dfmut <- cbind(dfmut, gene.codon.pos)
 
