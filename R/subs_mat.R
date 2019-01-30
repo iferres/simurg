@@ -22,7 +22,7 @@
 # # Set names
 # colnames(.codon.subst.mat) <- rownames(.codon.subst.mat) <- apply(eg, 1, paste0, collapse = '')
 #
-# # Set to 0 Prob (weigth) of changing from (rows) any codon to (columns) a stop
+# # Set to 0 Prob (weigth) of changing from (columns) any codon to (rows) a stop
 # # codon
 # .codon.subst.mat[stp ,] <- 0L
 #
