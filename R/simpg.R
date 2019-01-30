@@ -229,7 +229,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     ge <- genes[[i]]
     nn <- attr(ge, 'name')
     ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
-    ch <- mmmut[[1]][which(mmmut[[2]]==nn),]
+    ch <- mmmut[[1]][which(mmmut[[2]]==nn),,drop=FALSE]
     rns <- as.integer(rownames(ch))
     gna <- colnames(pm)[i]
     og <- rep(list(ge), norg)
