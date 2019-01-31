@@ -238,11 +238,13 @@ simpg <- function(ref='pan_genome_reference.fa',
     for (j in seq_len(dim(ch)[1])){
       # dsc <- Descendants(phy, ch[j, 3L])[[1]]
       # dsc <- phangorn:::bip(phy)[ch[j, 3L]][[1]]
-      dsc <- allDes[[ch[j, 3L]]]
-      change.from[rns[j]] <- og[[dsc[1]]][ch[j, 5]]
-      change.to[rns[j]] <- sample(allcodons, 1, prob = .subset2(smat, change.from[rns[j]]))
+      dsc <- allDes[[.subset2(ch, j, 3)]]
+      rnsj <- .subset2(rns, j)
+      chj5 <- .subset2(ch, j, 5L)
+      change.from[rnsj] <- og[[dsc[1]]][chj5]
+      change.to[rnsj] <- sample(allcodons, 1, prob = .subset2(smat, change.from[rnsj]))
       for (k in seq_along(dsc)){
-        og[[dsc[k]]][ch[j, 5L]] <- change.to[rns[j]]
+        og[[dsc[k]]][chj5] <- change.to[rnsj]
       }
     }
 
