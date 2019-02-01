@@ -89,7 +89,8 @@
     # descendants of the node where the gene was gained.
     if (df$type[i] == 'G'){
 
-      desc <- phy$tip.label[allDes[[.subset2(df, c(3, i))]]]
+      # desc <- phy$tip.label[allDes[[.subset2(df, c(3, i))]]]
+      desc <- phy[[3]][allDes[[.subset2(df, c(3, i))]]]
       nwc <- rep(0, norg)
       nwc[as.integer(sub('genome','',desc))] <- 1L
       pm <- cbind(pm, nwc)
@@ -100,7 +101,8 @@
     } else {
 
       lo <- sample(colnames(pm), 1)
-      desc <- phy$tip.label[allDes[[.subset2(df, c(3, i))]]]
+      # desc <- phy$tip.label[allDes[[.subset2(df, c(3, i))]]]
+      desc <- phy[[3]][allDes[[.subset2(df, c(3, i))]]]
       pm[as.integer(sub('genome','',desc)), lo] <- 0L
 
     }
