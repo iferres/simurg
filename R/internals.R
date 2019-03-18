@@ -7,10 +7,10 @@
 #' @importFrom phangorn Descendants
 #' @importFrom stats runif rpois
 #' @author Ignacio Ferres
-.sim_gl <- function(phy, m, depth, brti, ne, norg, ngenes, theta, rho){
+.sim_gl <- function(phy, m, depth, brti, ne, norg, ngenes, ggr, glr){
 
 
-  # theta <- 2e-6
+  # ggr <- 2e-6
   # Generate random deviate integers respect the expected number of gains using
   # a poisson distribution, given a gain rate and a branch length, and
   # distribute them uniformly along branches.
@@ -24,11 +24,11 @@
     min.ti <- round((min * ne) / depth)
     max.ti <- round((max * ne) / depth)
 
-    round(runif(rpois(1, ti * theta), min=min.ti, max=max.ti))
+    round(runif(rpois(1, ti * ggr), min=min.ti, max=max.ti))
 
   })
 
-  # rho <- 1e-6
+  # glr <- 1e-6
   # Anologous as above, but with loss rate.
   loss <- apply(m, 1, function(x){
 
@@ -40,7 +40,7 @@
     min.ti <- round((min * ne) / depth)
     max.ti <- round((max * ne) / depth)
 
-    round(runif(rpois(1, ti * rho), min=min.ti, max=max.ti))
+    round(runif(rpois(1, ti * glr), min=min.ti, max=max.ti))
 
   })
 

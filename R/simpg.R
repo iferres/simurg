@@ -6,7 +6,7 @@
 #' The algorithm first simulates a random coalescent tree (\link[ape]{rcoal}).
 #'
 #' Then, random deviates from the expected number of gene gain and loss
-#' according to branch length and parameters (\code{theta} and \code{rho}), are
+#' according to branch length and parameters (\code{ggr} and \code{glr}), are
 #' used to simulate gene birth and death along the tree. Since the IMG model is
 #' used, genes are only transmited vertically from generation to generation.
 #'
@@ -24,8 +24,8 @@
 #' @param ngenes The number of genes the MRCA will have.
 #' @param ne Effective population number. For E coli is ~25 million
 #' (Charlesworth et al., 2009). This is also the number of generations.
-#' @param theta Gene gain rate per generation.
-#' @param rho Gene loss rate per generation.
+#' @param ggr Gene gain rate per generation.
+#' @param glr Gene loss rate per generation.
 #' @param mu The per site per generation substitution rate.
 #' @param dir_out The non-existent directory where to put the simulated
 #' orthologous groups.
@@ -55,8 +55,8 @@ simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
                   ngenes=100,
                   ne = 5e7,
-                  theta = 2e-6,
-                  rho = 1e-6,
+                  ggr = 2e-6,
+                  glr = 1e-6,
                   mu = 5e-10,
                   dir_out='sim_pg',
                   smat){
@@ -72,8 +72,8 @@ simpg <- function(ref='pan_genome_reference.fa',
   isnu <- sapply(list(norg=norg,
                       ngenes=ngenes,
                       ne=ne,
-                      theta=theta,
-                      rho=rho, mu=mu), is.numeric)
+                      ggr=ggr,
+                      glr=glr, mu=mu), is.numeric)
   if (!all(isnu)){
     stop(paste('Class numeric required at:', names(isnu)[!isnu]))
   }
@@ -163,8 +163,8 @@ simpg <- function(ref='pan_genome_reference.fa',
   # norg : number of organisms to sample.
   # ngenes : number of *starting* genes at the MRCA.
   # phy : simulated coalescent tree.
-  # theta : gene gain rate per generation.
-  # rho : gene loss rate per generation.
+  # ggr : gene gain rate per generation.
+  # glr : gene loss rate per generation.
 
   cat('Simulating gene gain and loss.\n')
   gl <- .sim_gl(phy = phy,
@@ -174,8 +174,8 @@ simpg <- function(ref='pan_genome_reference.fa',
                 brti = brti,
                 norg = norg,
                 ngenes = ngenes,
-                theta = theta,
-                rho = rho)
+                ggr = ggr,
+                glr = glr)
 
   dfgl <- gl[[1]]
   pm <- gl[[2]]
@@ -278,8 +278,8 @@ simpg <- function(ref='pan_genome_reference.fa',
   attr(out, 'norg') <- norg
   attr(out, 'ngenes') <- ngenes
   attr(out, 'ne') <- ne
-  attr(out, 'theta') <- theta
-  attr(out, 'rho') <- rho
+  attr(out, 'ggr') <- ggr
+  attr(out, 'glr') <- glr
   attr(out, 'mu') <- mu
   attr(out, 'dir_out') <- dir_out
   attr(out, 'class') <- 'pangenomeSimulation'
