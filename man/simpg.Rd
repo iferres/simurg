@@ -5,7 +5,7 @@
 \title{Simulate a bacterial pangenome}
 \usage{
 simpg(ref = "pan_genome_reference.fa", norg = 10, ngenes = 100,
-  ne = 5e+07, theta = 2e-06, rho = 1e-06, mu = 5e-10,
+  ne = 5e+07, ggr = 2e-06, glr = 1e-06, mu = 5e-10,
   dir_out = "sim_pg", smat)
 }
 \arguments{
@@ -18,9 +18,9 @@ simpg(ref = "pan_genome_reference.fa", norg = 10, ngenes = 100,
 \item{ne}{Effective population number. For E coli is ~25 million
 (Charlesworth et al., 2009). This is also the number of generations.}
 
-\item{theta}{Gene gain rate per generation.}
+\item{ggr}{Gene gain rate per generation.}
 
-\item{rho}{Gene loss rate per generation.}
+\item{glr}{Gene loss rate per generation.}
 
 \item{mu}{The per site per generation substitution rate.}
 
@@ -54,7 +54,7 @@ tree as guide, according to the neutral model and the Infinite Many Genes
 The algorithm first simulates a random coalescent tree (\link[ape]{rcoal}).
 
 Then, random deviates from the expected number of gene gain and loss
-according to branch length and parameters (\code{theta} and \code{rho}), are
+according to branch length and parameters (\code{ggr} and \code{glr}), are
 used to simulate gene birth and death along the tree. Since the IMG model is
 used, genes are only transmited vertically from generation to generation.
 
