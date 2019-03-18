@@ -6,7 +6,7 @@ This R package is intended to produce simulated pangenomes using reference seque
 
 The algorithm first simulates a random coalescent tree.
 
-Then, random deviates from the expected number of gene gain and loss according to branch length and other parameters (*theta*: gene gain rate per generation; and *rho*; gene loss rate per generation), are used to simulate gene birth and death along the tree. Since the IMG model is used, genes are only transmited vertically from generation to generation.
+Then, random deviates from the expected number of gene gain and loss according to branch length and other parameters (*ggr*: gene gain rate per generation; and *glr*; gene loss rate per generation), are used to simulate gene birth and death along the tree. Since the IMG model is used, genes are only transmited vertically from generation to generation.
 
 Point mutations are simulated following a similar process as the above: random deviates from the expected number of mutations according to branch length and mutation rate (*mu*), are used. Mutations are then distributed along sites with uniform probability. By default stop codons are avoided. (**note:** actually, codons and not sites are conditioned to mutation).
 
@@ -231,7 +231,7 @@ list.files(path = normalizePath(dir_out), full.names = TRUE)[1:5]
 
 -   **ne** is the effective population size of the species, although it is also interpreted as the number of generations from root to tips, see \[2\]. According to \[3\], for *E. coli* is ~ 25 million. The default is two times this number as some studies have pointed out that \[3\] may be too conservative.
 
--   **theta** and **rho** are the gene gain/loss rate per generation, respectively. I'm considering changing these parameter's names because they are the equivalent to *u* and *v* in \[2\]; `theta` = 2 x `Ne` *u*, and `rho` = 2 x `Ne` *v* in the IMG model. So, for now beware of that technical detail. In this package you are setting the probability of gene gain and loss **per generation**, independently from the `Ne`. The values used by default were arbitrarily set, so the probability of gene gain is two times the probability of gene loss.
+-   **ggr** and **glr** are the gene gain/loss rate per generation, respectively. These are the equivalent to *u* and *v* in \[2\]; `theta` = 2 x `Ne` *u*, and `rho` = 2 x `Ne` *v* in the IMG model. You are setting the probability of gene gain and loss **per generation**, independently from the `Ne`. The values used by default were arbitrarily set, so the probability of gene gain is two times the probability of gene loss.
 
 -   **mu** is the per site per generation substitution rate. According to \[4\], a typical bacterial substitution rate is around 1e-5 and 1e-9 per site per annum. Taking, e.g., 1e-7 substitutions per site per annum, and assuming 200 generations per annum \[5\]: 1e-7 / 200 = 5e-10 substitutions per site per generation, which was taken as default.
 
