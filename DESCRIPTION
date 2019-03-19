@@ -1,4 +1,4 @@
-Package: pansimulatoR
+Package: simba
 Version: 0.0.0.9000
 Title: Simulate Bacterial Pangenomes
 Description: This package is intended to simulate a bacterial pangenome, given
