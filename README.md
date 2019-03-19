@@ -1,4 +1,4 @@
-# pansimulatoR: Simulate a bacterial pangenome in R
+# simba: Simulate a Bacterial Pangenome in R
 
 This R package is intended to produce simulated pangenomes using reference sequences as starting point (MRCA), and both Neutral \[1\] and Infinitely Many Genes (IMG) \[2\] models to produce changes along branches of a simulated coalescent tree.
 
@@ -20,18 +20,18 @@ First load package and decompress the attached reference sequences (for tutorial
 setwd(tempdir())
 
 #Load library
-library(pansimulatoR)
+library(simba)
 ```
 
     ## Loading required package: ape
 
 ``` r
 #List attached file
-tgz <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'pansimulatoR')
+tgz <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
 tgz
 ```
 
-    ## [1] "/home/user/R/x86_64-redhat-linux-gnu-library/3.3/pansimulatoR/extdata/ref_tutorial.tar.gz"
+    ## [1] "/home/user/R/x86_64-redhat-linux-gnu-library/3.3/simba/extdata/ref_tutorial.tar.gz"
 
 ``` r
 ref <- untar(tarfile = tgz, list = T)
