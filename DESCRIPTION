@@ -1,5 +1,5 @@
 Package: simba
-Version: 0.0.0.9000
+Version: 0.1.0
 Title: Simulate Bacterial Pangenomes
 Description: This package is intended to simulate a bacterial pangenome, given
     an initial MRCA, a number of generations, a substitution rate, a gene gain and 
