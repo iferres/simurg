@@ -28,6 +28,8 @@
 
   })
 
+  if (!length(gain)) gain <- rep(list(numeric(0)), dim(m)[1])
+
   # glr <- 1e-6
   # Anologous as above, but with loss rate.
   loss <- apply(m, 1, function(x){
@@ -41,8 +43,9 @@
     max.ti <- round((max * ne) / depth)
 
     round(runif(rpois(1, ti * glr), min=min.ti, max=max.ti))
-
   })
+
+  if (!length(loss)) loss <- rep(list(numeric(0)), dim(m)[1])
 
   dfg <- lapply(1:(dim(m)[1]), function(x){
 
