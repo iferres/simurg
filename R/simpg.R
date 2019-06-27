@@ -21,11 +21,11 @@
 #' following the evolutionary history simulated above.
 #' @param ref A multi-fasta file from where to sample genes.
 #' @param norg The number of organisms sampled.
-#' @param ngenes The number of genes the MRCA will have.
 #' @param ne Effective population number. For E coli is ~25 million
 #' (Charlesworth et al., 2009). This is also the number of generations.
-#' @param ggr Gene gain rate per generation.
-#' @param glr Gene loss rate per generation.
+#' @param C The coregenome size.
+#' @param u Probability of gene gain per generation.
+#' @param v Probability of gene loss rate per generation.
 #' @param mu The per site per generation substitution rate.
 #' @param dir_out The non-existent directory where to put the simulated
 #' orthologous groups.
@@ -39,7 +39,7 @@
 #' itself, and equal probability weights of transition to any other codon which
 #' differ in, at most, one base (point mutations; one site per codon at most is
 #' mutated each time). If you want to use a different codon matrix, I recommend
-#' to use the default as reference: \code{pansimulatoR:::.codon.subst.mat} .
+#' to use the default as reference: \code{simba:::.codon.subst.mat} .
 #' See package source (R/subs_mat.R) for a guide on how to generate a similar
 #' matrix.
 #' @return A \code{list} of length 4. (1) The coalescent phylogenetic tree, (2)
@@ -53,13 +53,15 @@
 #' @export
 simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
-                  ngenes=100,
                   ne = 5e7,
-                  ggr = 2e-6,
-                  glr = 1e-6,
+                  C = 100,
+                  u = 2e-4,
+                  v = 1e-6,
                   mu = 5e-10,
                   dir_out='sim_pg',
-                  smat){
+                  smat,
+                  force = FALSE,
+                  verbose = TRUE){
 
   #################
   ## Check input ##
@@ -70,17 +72,23 @@ simpg <- function(ref='pan_genome_reference.fa',
   }
 
   isnu <- sapply(list(norg=norg,
-                      ngenes=ngenes,
+                      C=C,
                       ne=ne,
-                      ggr=ggr,
-                      glr=glr, mu=mu), is.numeric)
+                      u=u,
+                      v=v,
+                      mu=mu), is.numeric)
   if (!all(isnu)){
     stop(paste('Class numeric required at:', names(isnu)[!isnu]))
   }
 
 
   if (dir.exists(dir_out)){
-    stop('dir_out already exists')
+    stop('dir_out already exists. Use force=TRUE to overwrite it.')
+  }
+
+  if (dir.exists(dir_out) & force){
+    unlink(dir_out, recursive = TRUE)
+    dir.create(dir_out)
   }
 
 
@@ -131,21 +139,57 @@ simpg <- function(ref='pan_genome_reference.fa',
   #Remove genes with 'n's.
   w <- which(sapply(rf, function(x) 'n'%in%x))
   if (length(w)>0){
-    cat(paste0('Discarded ', length(w), ' sequences due to presence of "n".\n'))
-    rf <- rf[-w]
+    if (verbose){
+      message(paste0('Discarded ', length(w), ' sequences due to presence of "n".'))
+    }
+   rf <- rf[-w]
   }
 
   #Remove genes with length not multiple of 3
   w <- which(sapply(rf, length)%%3!=0)
   if (length(w)>0){
-    cat(paste0('Discarded ', length(w), ' sequences due to presence of "n".\n'))
+    if (verbose){
+      message(paste0('Discarded ', length(w), ' sequences with length not multiple of 3.'))
+    }
     rf <- rf[-w]
+  }
+
+  ############################
+  ## Derived IMG parameters ##
+  ############################
+  #
+  theta <- 2 * ne * u
+  rho <- 2 * ne * v
+  #theoric mrca accessory size
+  mrca_acc_t <- theta / rho
+  #observed mrca accessory size
+  otheta <- rpois(1, theta)
+  ou <- otheta / (2*ne) #Observed gene gain rate
+  orho <- rpois(1, rho)
+  ov <- orho / (2*ne) #Observed gene loss rate
+  mrca_acc_o <- round(otheta / orho)
+
+  if (verbose){
+    mssg1 <- ' IMG parameters:'
+    mssg2 <- paste(' # Core genome size, C =', C)
+    mssg3 <- paste(' # Probability of gene gain,', ' \u03C5 =', u)
+    mssg4 <- paste(' # Probability of gene loss,', '\u03BD =', v)
+    mssg5 <- paste(' # Number of generations, Ne = ', ne)
+    mssg6 <- paste(' Derived from parameters:')
+    mssg7 <- paste(' # \u03F4 = 2Ne', '\u03C5 =', theta)
+    mssg8 <- paste(' # \u03C1 = 2Ne', '\u03BD =', rho)
+    mssg9 <- paste(' # Theorical (expected) MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
+    mssg10 <- paste(' # Simulated (observed) MRCA size: C + Poi(\u03F4 / \u03C1) = ', C+mrca_acc_o)
+    mssg <- c(mssg1, mssg2, mssg3, mssg4, mssg5,
+              mssg6, mssg7, mssg8, mssg9, mssg10)
+    message(paste(mssg, collapse = '\n'))
   }
 
   ##############################
   ## Simulate coalescent tree ##
   ##############################
-  cat('Simulating coalescent tree.\n')
+  if (verbose) message('Simulating coalescent tree, \u03C4')
+  # cat('Simulating coalescent tree.\n')
   phy <- rcoal(norg, tip.label = paste0('genome', 1:norg))
 
   m <- as.data.frame(phy$edge)
@@ -153,6 +197,10 @@ simpg <- function(ref='pan_genome_reference.fa',
 
   depth <- coalescent.intervals(phy)$total.depth
   brti <- c(structure(rep(0, norg), names=1:norg), branching.times(phy))
+  if (verbose){
+    mssg <- paste(capture.output(summary(phy))[-c(1:3)], collapse = '\n')
+    message(mssg)
+  }
 
   #################################
   ## Simulate gene gain and loss ##
@@ -160,26 +208,23 @@ simpg <- function(ref='pan_genome_reference.fa',
 
   # On this step, gene birth and death is simulated in order to obtain a
   # panmatrix at the end of this stage (IMG model).
-  # norg : number of organisms to sample.
-  # ngenes : number of *starting* genes at the MRCA.
-  # phy : simulated coalescent tree.
-  # ggr : gene gain rate per generation.
-  # glr : gene loss rate per generation.
-
   cat('Simulating gene gain and loss.\n')
   gl <- .sim_gl(phy = phy,
                 m = m,
                 ne = ne,
-                depth = depth,
                 brti = brti,
                 norg = norg,
-                ngenes = ngenes,
-                ggr = ggr,
-                glr = glr)
+                ou = ou,
+                mrca_acc_o = mrca_acc_o)
 
   dfgl <- gl[[1]]
   pm <- gl[[2]]
+  rn <- rownames(pm)
+  # Attach core genes panmatrix
+  pm <- cbind(matrix(1L, nrow = norg, ncol = C), pm)
   dpm <- dim(pm)
+  rownames(pm) <- rn
+  colnames(pm) <- paste0('gene', seq_len(dpm[2]))
 
   # Sample from the reference many genes as columns in the panmatrix are.
   genes <- sample(rf, size = dpm[2])
@@ -203,7 +248,6 @@ simpg <- function(ref='pan_genome_reference.fa',
                     brti = brti,
                     ne = ne,
                     norg = norg,
-                    ngenes = ngenes,
                     mu = mu,
                     smat = smat)
 
