@@ -215,6 +215,7 @@ simpg <- function(ref='pan_genome_reference.fa',
                 brti = brti,
                 norg = norg,
                 ou = ou,
+                ov = ov,
                 mrca_acc_o = mrca_acc_o)
 
   dfgl <- gl[[1]]

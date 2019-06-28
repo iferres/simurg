@@ -138,7 +138,7 @@
 
   pm <- matrix(data = 1L,
                nrow = norg,
-               ncol = mrca_ag_size,
+               ncol = mrca_acc_o,
                dimnames = list(paste0('genome', 1:norg),
                                NULL))
 
