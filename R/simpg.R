@@ -53,10 +53,10 @@
 #' @export
 simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
-                  ne = 5e7,
+                  ne = 1e11,
                   C = 100,
-                  u = 2e-4,
-                  v = 1e-6,
+                  u = 1e-8,
+                  v = 1e-11,
                   mu = 5e-10,
                   dir_out='sim_pg',
                   smat,
@@ -163,9 +163,9 @@ simpg <- function(ref='pan_genome_reference.fa',
   #theoric mrca accessory size
   mrca_acc_t <- theta / rho
   #observed mrca accessory size
-  otheta <- rpois(1, theta)
+  otheta <- mean(rpois(1000, theta))
   ou <- otheta / (2*ne) #Observed gene gain rate
-  orho <- rpois(1, rho)
+  orho <- mean(rpois(1000, rho))
   ov <- orho / (2*ne) #Observed gene loss rate
   mrca_acc_o <- round(otheta / orho)
 
