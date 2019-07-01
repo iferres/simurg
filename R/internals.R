@@ -130,7 +130,7 @@
   df <- do.call(rbind,  list(dfg, dfl))
   df <- as.data.frame(df, stringsAsFactors = FALSE)
   colnames(df) <- c('generation', 'from.node', 'to.node', 'type')
-  df$generation <- as.integer(df$generation)
+  df$generation <- as.numeric(df$generation)
   df$from.node <- as.integer(df$from.node)
   df$to.node <- as.integer(df$to.node)
   # df$type <- as.factor(df$type)
