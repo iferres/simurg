@@ -209,7 +209,7 @@ simpg <- function(ref='pan_genome_reference.fa',
   # On this step, gene birth and death is simulated in order to obtain a
   # panmatrix at the end of this stage (IMG model).
   cat('Simulating gene gain and loss.\n')
-  gl <- .sim_gl(phy = phy,
+  pm <- .sim_gl(phy = phy,
                 m = m,
                 ne = ne,
                 brti = brti,
@@ -218,8 +218,8 @@ simpg <- function(ref='pan_genome_reference.fa',
                 ov = ov,
                 mrca_acc_o = mrca_acc_o)
 
-  dfgl <- gl[[1]]
-  pm <- gl[[2]]
+  # dfgl <- gl[[1]]
+  # pm <- gl[[2]]
   rn <- rownames(pm)
   # Attach core genes panmatrix
   pm <- cbind(matrix(1L, nrow = norg, ncol = C), pm)
