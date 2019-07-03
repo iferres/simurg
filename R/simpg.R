@@ -241,7 +241,13 @@ simpg <- function(ref='pan_genome_reference.fa',
   # codons.
   # mu : substitution rate per site per generation.
 
-  cat('Simulating point mutations.\n')
+  if (verbose){
+    mssg1 <- ' Simulating point mutations:'
+    mssg2 <- paste(' # Mutation rate, \u03BC =', mu)
+    mssg <- c(mssg1, mssg2)
+    message(paste(mssg, collapse = '\n'))
+  }
+
   mmmut <- .sim_mut(pm = pm,
                     phy = phy,
                     nsites = nsites,
@@ -252,6 +258,11 @@ simpg <- function(ref='pan_genome_reference.fa',
                     norg = norg,
                     mu = mu,
                     smat = smat)
+
+  if (verbose){
+    mssg <- paste(capture.output(str(mmmut, list.len = 3)), collapse = '\n')
+    message(mssg)
+  }
 
 
   ########################
