@@ -260,9 +260,69 @@ simpg <- function(ref='pan_genome_reference.fa',
                     smat = smat)
 
   if (verbose){
-    mssg <- paste(capture.output(str(mmmut, list.len = 3)), collapse = '\n')
+    mssg1 <- 'Number and position of substitutions branch-wise simulated:\n'
+    mssg2 <- paste(capture.output(str(mmmut, list.len = 3)), collapse = '\n')
+    mssg <- c(mssg1, mssg2)
     message(mssg)
   }
+
+
+  ########################
+  ## Generate sequences ##
+  ########################
+
+  allcodons <- dimnames(smat)[[1]]
+  allDes <- Descendants(phy, type = 'tips')
+  # Paths from root to tips
+  roottotip <- setNames(ape::nodepath(phy), nm = seq_len(norg))
+  gnas <- colnames(pm)
+
+  for (i in seq_len(dpm[2])){
+    gnms <- names(which(pm[, i]==1))
+    ngnm <- length(gnms)
+    mrca <- getMRCA(phy, tip = gnms)
+    alds <- allDes[[mrca]]
+    ge <- genes[[i]]
+    nn <- attr(ge, 'name')
+    muts <- mmmut[[nn]]
+    gna <- gnas[i]
+
+    ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
+    og <- rep(list(ge), ngnm)
+    names(og) <- paste0(gnms, '_', gna, ' ref:', nn)
+
+    if (!is.null(mrca)){
+
+      # Segments.
+      ismrca <- which(sapply(roottotip, function(x) mrca %in%x))
+      rttp <- lapply(roottotip[ismrca], function(x){
+        x[which(x==mrca):length(x)]
+      })
+
+      sgmt <- lapply(rttp, function(x){
+        paste(x[1:(length(x)-1)], x[2:length(x)], sep = '-')
+      })
+
+    }else{
+      # Segments
+      sgmt <- paste(rev(rev(roottotip[[which(pm[, i]==1)]])[1:2]), collapse = '-')
+    }
+
+    # Iterate over segments
+    for (j in seq_along(sgmt)){
+      mt <- muts[[]]
+    }
+
+  }
+
+
+
+
+
+
+
+
+
 
 
   ########################

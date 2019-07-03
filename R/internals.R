@@ -223,7 +223,7 @@
     }else{
       tips <- unname(which(pm[, g]==1))
       # Segments
-      sgmt <- paste(rev(rev(roottotip[[2]])[1:2]), collapse = '-')
+      sgmt <- paste(rev(rev(roottotip[[which(pm[, g]==1L)]])[1:2]), collapse = '-')
     }
 
 
