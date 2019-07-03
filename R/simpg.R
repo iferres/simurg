@@ -242,8 +242,9 @@ simpg <- function(ref='pan_genome_reference.fa',
   # mu : substitution rate per site per generation.
 
   cat('Simulating point mutations.\n')
-  mmmut <- .sim_mut(phy = phy,
-                    genes = genes,
+  mmmut <- .sim_mut(pm = pm,
+                    phy = phy,
+                    nsites = nsites,
                     m = m,
                     depth = depth,
                     brti = brti,

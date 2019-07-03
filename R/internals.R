@@ -180,21 +180,17 @@
 
 
 
-  return(list(df, pm))
+  return(pm)
 }
 
 
 
+#' @importFrom ape getMRCA nodepath
+#' @importFrom phangorn Descendants
+.sim_mut <- function(pm, phy, nsites, m, depth, brti, ne, norg, mu, smat){
 
-
-
-
-
-## Simulate mutations
-#' @importFrom phangorn Ancestors
-#' @importFrom stats runif rpois
-#' @author Ignacio Ferres
-.sim_mut <- function(phy, genes, m, depth, brti, ne, norg, mu, smat){
+  revbrti <-  max(brti) - brti
+  dpt <- max(revbrti)
 
   if (missing(smat)){
 
@@ -202,116 +198,85 @@
 
   }
 
-  # Count total number of sites.
-  nsites <- sum(sapply(genes, length))
+  # Paths from root to tips
+  roottotip <- setNames(nodepath(phy), nm = seq_len(norg))
+  # Create structure to store result
+  res_mut <- setNames(vector('list', dim(pm)[2]), names(nsites))
 
-  # At each branch, simulate generations at which substitutions happens.
-  # Generate random deviate integers respect the expected number of
-  # substitutions using a poisson distribution, given a substitution rate, a
-  # number of sites and a branch length,and distribute them uniformly along
-  # branches.
-  mutations <- apply(m, 1, function(x){
 
-    ti <- (x[3] * ne) / depth
+  # Iterate over genes
+  for (g in seq_len(dim(pm)[2])){
 
-    min <- brti[as.character(x[2])]
-    max <- brti[as.character(x[1])]
+    # ge <- genes[[i]]
+    # nsites <- length(ge)
+    mrca <- getMRCA(phy, names(which(pm[, g]==1L)))
+    if (!is.null(mrca)){
+      tips <- Descendants(phy, mrca, 'tips')[[1]]
 
-    min.ti <- round((min * ne) / depth)
-    max.ti <- round((max * ne) / depth)
-
-    round(runif(rpois(1, ti * mu * nsites), min=min.ti, max=max.ti))
-
-  })
-
-  dfmut <- lapply(1:(dim(m)[1]), function(x){
-
-    if (length(mutations[[x]])>0){
-      cbind(mutations[[x]], m[x, 1], m[x, 2])
+      # Segments.
+      ismrca <- which(sapply(roottotip, function(x) mrca %in%x))
+      rttp <- lapply(roottotip[ismrca], function(x){
+        x[which(x==mrca):length(x)]
+      })
+      sgmt <- m[which(m$V1 %in% unlist(rttp)), c(1,2)]
+      sgmt <- paste(sgmt$V1, sgmt$V2, sep  =  '-')
     }else{
-      NULL
+      tips <- unname(which(pm[, g]==1))
+      # Segments
+      sgmt <- paste(rev(rev(roottotip[[2]])[1:2]), collapse = '-')
     }
 
-  })
 
-  dfmut <- do.call(rbind, dfmut)
-  dd <- dim(dfmut)
-  dfmut <- as.integer(dfmut)
-  attributes(dfmut) <- list(dim=dd,
-                            dimnames=list(NULL,
-                                          c('generation',
-                                            'from.node',
-                                            'to.node')))
+    # Create structure to save simulated mutations
+    muts <- setNames(vector('list', length = length(sgmt)), nm = sgmt)
 
-  dfmut <- dfmut[order(dfmut[, 1], decreasing = TRUE),]
-  position <- as.integer(round(runif(dim(dfmut)[1], min = 1, max = nsites)))
-  codon.pos <- as.integer(ceiling(position/3))
-  dfmut <- cbind(dfmut, position, codon.pos)
+    #Iterate over descendant organisms
+    for (i in tips){
+      nds <- roottotip[[i]]
+      # Iterate over branches
+      for (j in seq_len(length(nds) - 1L)){
+        sg <- c(nds[j], nds[j+1])
+        psg <- paste(sg, collapse = '-')
+        # Do not repeat if already computed branch
+        if (psg %in% sgmt){
+          # Simulate number of substitutions for this segment (binomial)
+          slth <- revbrti[sg[2]] - revbrti[sg[1]]
+          ngen <- unname( slth * ne / dpt)
+          trials <- ngen * nsites[g]
 
-  # codones <- strsplit(paste0(genes, collapse = ''), "(?<=.{3})", perl = TRUE)[[1]]
-  codones <- lapply(genes, function(x){
-    paste0(x[c(T,F,F)], x[c(F,T,F)], x[c(F,F,T)])
-  })
-  codones <- unlist(codones)
-  # names(codones) <- NULL
+          # # Too big, coerces it into numeric for double presision :,(
+          # trials <- ngen * nsites
+          # # This produces NAs because expects class(trials) == 'integer' :
+          # rbinom(1, size = trials, prob = mu)
+          # # This produces NaNs:
+          # qbinom(runif(1), trials, mu, FALSE)
+
+          # Approximation with poisson  ¯\_(ツ)_/¯ :
+          nmut <- rpois(1, trials * mu)
+
+          if (nmut){
+            # Distribute substitutions with uniform probability
+            smut <- sample(seq_len(nsites[g]), nmut, replace = TRUE)
+            muts[[psg]] <- smut
+          }else{
+            muts[[psg]] <- NA_integer_
+          }
+
+          # "Remove" segment (mark as already computed)
+          sgmt <- sgmt[-which(sgmt==psg)]
+        }
+
+      }
+
+    }
+
+    #print(g)
+    res_mut[[g]] <- muts
+
+    #Finish gene[g]
+
+  }
 
 
-  # dfmut$change.from <- codones[dfmut$codon.pos]
-  #
-  #
-  # # Mutate positions according Jukes-Cantor model (??? sort of...).
-  # ncodon <- colnames(smat)
-  # dfmut$change.to <- sapply(dfmut$change.from,
-  #                           function(x, ncodon, smat) {
-  #                             sample(ncodon, 1, prob = smat[,x])
-  #                           },
-  #                           ncodon = ncodon,
-  #                           smat = smat)
-  #
-  #
-  # # Correct multiples changes on same position if first change affect the branch
-  # # of the second.
-  # dups <- duplicated(dfmut$codon.pos) | duplicated(dfmut$codon.pos, fromLast = TRUE)
-  # un <- unique(dfmut$codon.pos[dups])
-  # for (i in seq_along(un)){
-  #   aa <- which(dfmut$codon.pos==un[i])
-  #   for (j in 2:length(aa)){
-  #     K <- j - 1
-  #     while(K>0){
-  #       ab <- dfmut[aa[K], ]
-  #       a1 <- c(Ancestors(phy, ab$to.node), ab$to.node)
-  #       ac <- dfmut[aa[j], ]
-  #       a2 <- c(Ancestors(phy, ac$to.node), ac$to.node)
-  #       #branch and position are ancestral?
-  #       if (all(a1 %in% a2)){
-  #         dfmut$change.from[aa[j]] <- dfmut$change.to[aa[K]]
-  #         dfmut$change.to[aa[j]] <- sample(ncodon, 1, prob = smat[,dfmut$change.from[aa[j]]])
-  #         K <- 0
-  #       }else{
-  #         K <- ifelse(K==1, 0, K-1)
-  #       }
-  #     }
-  #   }
-  # }
-
-  #Identify gene from absolute position. Identify relative position (in gene).
-  gle <- sapply(genes, length)
-  csu <- ceiling(cumsum(gle)/3)
-  gene <- vapply(dfmut[, 5L], function(x){names(which(csu>=x))[1]}, FUN.VALUE = NA_character_)
-  gene.codon.ini.coord <- c(1L, csu[-length(csu)]+1L)
-  names(gene.codon.ini.coord) <- names(csu)
-  # gene.codon.pos <- vapply(dfmut[, 5L], function(x){
-  #   if (length(which(csu<=x))) as.integer(x-csu[rev(which(csu<x))[1]]) else as.integer(x)
-  # }, FUN.VALUE = NA_integer_)
-  gene.codon.pos <- dfmut[, 5L] - gene.codon.ini.coord[gene] + 1L
-  dfmut <- dfmut[, -4L]
-  dfmut <- cbind(dfmut, gene.codon.pos)
-
-  return(list(dfmut, gene))
+  res_mut
 }
-
-
-
-
-
-
