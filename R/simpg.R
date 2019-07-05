@@ -27,8 +27,15 @@
 #' @param u Probability of gene gain per generation.
 #' @param v Probability of gene loss rate per generation.
 #' @param mu The per site per generation substitution rate.
+#' @param write_by One of \code{'gene'} of \code{'genome'}. Whether to write
+#' sequences in files grouped by orthology or by genome, respectively.
 #' @param dir_out The non-existent directory where to put the simulated
 #' orthologous groups.
+#' @param replace \code{logical}. Whether to replace (see \link[base]{sample}) when sampling
+#' genes from reference. Default and recommended is FALSE, since IMG model states
+#' that each new gene is a different one. Setting \code{replace = TRUE} will probably
+#' cause duplicated genes, although each one will follow a different evolutionary
+#' history in the simulation.
 #' @param smat A codon substitution matrix with probability weights for
 #' transition. It must be a \code{data.frame} with \code{dim(smat) == c(64, 64)}, where
 #' column and row names are the possible combination of codons (i.e. "aaa",
@@ -58,7 +65,9 @@ simpg <- function(ref='pan_genome_reference.fa',
                   u = 1e-8,
                   v = 1e-11,
                   mu = 5e-12,
+                  write_by = 'gene',
                   dir_out='sim_pg',
+                  replace = FALSE,
                   smat,
                   force = FALSE,
                   verbose = TRUE){
@@ -81,9 +90,13 @@ simpg <- function(ref='pan_genome_reference.fa',
     stop(paste('Class numeric required at:', names(isnu)[!isnu]))
   }
 
+  write_by <- match.arg(write_by, choices = c('gene', 'genome'), several.ok = F)
+
 
   if (dir.exists(dir_out)){
     stop('dir_out already exists. Use force=TRUE to overwrite it.')
+  }else{
+    dir.create(dir_out)
   }
 
   if (dir.exists(dir_out) & force){
@@ -228,8 +241,17 @@ simpg <- function(ref='pan_genome_reference.fa',
   colnames(pm) <- paste0('gene', seq_len(dpm[2]))
 
   # Sample from the reference many genes as columns in the panmatrix are.
-  genes <- sample(rf, size = dpm[2])
+  if (dpm[2] > length(rf) & replace == FALSE){
+    stop("cannot take a sample larger than the panmatrix when 'replace = FALSE'")
+  }
+  if (replace){
+    genes <- sample(rf, size = dpm[2], replace = TRUE)
+  }else{
+    genes <- sample(rf, size = dpm[2], replace = FALSE)
+  }
+
   rm(rf)
+  nsites <- sapply(genes, length)
 
   #######################
   ## Simulate mutation ##
@@ -277,19 +299,29 @@ simpg <- function(ref='pan_genome_reference.fa',
   roottotip <- setNames(ape::nodepath(phy), nm = seq_len(norg))
   gnas <- colnames(pm)
 
+  if (verbose){
+    mssg <- paste('Writing sequences at', dir_out)
+    message(mssg)
+    pb <- txtProgressBar(min = 0, max = dpm[2], style = 3)
+  }
+
   for (i in seq_len(dpm[2])){
     gnms <- names(which(pm[, i]==1))
     ngnm <- length(gnms)
     mrca <- getMRCA(phy, tip = gnms)
-    alds <- allDes[[mrca]]
+    # alds <- allDes[[mrca]]
     ge <- genes[[i]]
     nn <- attr(ge, 'name')
     muts <- mmmut[[nn]]
+    # Unique, since more than 2 substitutions on the same place is
+    # seen as a single change. Saturation:
+    muts <- lapply(muts, unique)
     gna <- gnas[i]
 
     ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
     og <- rep(list(ge), ngnm)
-    names(og) <- paste0(gnms, '_', gna, ' ref:', nn)
+    # names(og) <- paste0(gnms, '_', gna, ' ref:', nn)
+    names(og) <- gnms
 
     if (!is.null(mrca)){
 
@@ -309,100 +341,151 @@ simpg <- function(ref='pan_genome_reference.fa',
     }
 
     # Iterate over segments
-    for (j in seq_along(sgmt)){
-      mt <- muts[[]]
-    }
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-  ########################
-  ## Generate sequences ##
-  ########################
-
-  # Takes the mut data.frame and applies substitutions cronologically to each
-  # gene. Then removes sequences according the final panmatrix.
-  rownames(dfgl) <- 1:(dim(dfgl)[1])
-  dd <- dim(mmmut[[1]])
-  rownames(mmmut[[1]]) <- 1:(dd[1])
-  change.from <- vector('character', dd[1])
-  change.to <- vector('character', dd[1])
-  allcodons <- dimnames(smat)[[1]]
-  allDes <- Descendants(phy, type = 'tips')
-
-  cat(paste0('Writing groups of orthologous at "', dir_out, '" .\n'))
-  dir.create(dir_out)
-  for (i in seq_len(dpm[2])){
-
-    ge <- genes[[i]]
-    nn <- attr(ge, 'name')
-    ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
-    ch <- mmmut[[1]][which(mmmut[[2]]==nn),,drop=FALSE]
-    rns <- as.integer(rownames(ch))
-    gna <- colnames(pm)[i]
-    og <- rep(list(ge), norg)
-    names(og) <- paste0(phy$tip.label, '_', gna, ' ref:', nn)
-
-    for (j in seq_len(dim(ch)[1])){
-      # dsc <- Descendants(phy, ch[j, 3L])[[1]]
-      # dsc <- phangorn:::bip(phy)[ch[j, 3L]][[1]]
-      dsc <- allDes[[.subset2(ch, j, 3)]]
-      rnsj <- .subset2(rns, j)
-      chj5 <- .subset2(ch, j, 5L)
-      change.from[rnsj] <- og[[dsc[1]]][chj5]
-      change.to[rnsj] <- sample(allcodons, 1, prob = .subset2(smat, change.from[rnsj]))
-      for (k in seq_along(dsc)){
-        og[[dsc[k]]][chj5] <- change.to[rnsj]
+    sgmt <- unique(unlist(sgmt, use.names = FALSE))
+    for (j in sgmt){
+      #Get mutation position (in codon coordinates)
+      mt <- as.integer(ceiling(muts[[j]]/3))
+      #Get sequences to apply changes
+      dss <- allDes[[as.integer(strsplit(j, '-')[[1]][2])]]
+      orgs <- phy$tip.label[dss] # orgs are all organisms which descend from this node
+      geno <- gnms[which(gnms%in%orgs)] # gnms are all organisms which DO HAVE this gene
+      # If length(geno)==0 means that none of the descendants genomes in this
+      # branch inherit that gene (gene loss on that branch). If it is the case,
+      # do not compute anything.
+      if (length(geno)){
+        # Iterate over mutations
+        for (k in mt){
+          old <- og[[geno[1]]][k]
+          new <- sample(allcodons, 1, prob = .subset2(smat, old))
+          # Apply changes to gene of descendant organisms
+          for (o in geno){
+            og[[o]][k] <- new
+          }
+        }
       }
     }
 
-    og <- lapply(og, paste0, collapse='')
+    og <- lapply(og, paste0, collapse = '')
+    gnn <- names(og)
+    names(og) <- paste0(gnn, '_', gna, ' ref:', nn)
 
-    aaa <- pm[, i]
-    class(aaa) <- 'logical'
-    og <- og[paste0(names(which(aaa)), '_', gna, ' ref:', nn)]
+    if (write_by == 'gene'){
+      write.fasta(sequences = og,
+                  names = names(og),
+                  file.out = paste0(dir_out, '/', gna,'.fasta'))
+    }else{
 
-    write.fasta(sequences = og,
-                names = names(og),
-                file.out = paste0(dir_out, '/', gna,'.fasta'))
+      lapply(names(og), function(x){
+        sspl <- strsplit(x, '_')[[1]][1]
+        fn <- paste0(sspl, '.fasta')
+        write.fasta(sequences = og[x],
+                    names = x,
+                    file.out = paste0(dir_out, '/', fn),
+                    open = 'a')
+
+      })
+
+    }
+
+    if (verbose) setTxtProgressBar(pb, i)
+
   }
 
-  dfmut <- as.data.frame(mmmut[[1]])
-  dfmut$change.from <- change.from
-  dfmut$change.to <- change.to
-  dfmut$gene <- mmmut[[2]]
+  if (verbose) close(pb)
+
+
+
 
   ############
   ## Return ##
   ############
 
-  # Return a list with a coalescent tree, a data.frame representing the
-  # gain-loss events, another one representing mutation events, and the final
-  # panmatrix. Also some attributes regarding input parameters are returned.
 
-  out <- list(phy, dfgl, dfmut, pm)
-  names(out) <- c('coalescent', 'gain-loss', 'substitutions', 'panmatrix')
-  attr(out, 'reference') <- normalizePath(ref)
-  attr(out, 'norg') <- norg
-  attr(out, 'ngenes') <- ngenes
-  attr(out, 'ne') <- ne
-  attr(out, 'ggr') <- ggr
-  attr(out, 'glr') <- glr
-  attr(out, 'mu') <- mu
-  attr(out, 'dir_out') <- dir_out
-  attr(out, 'class') <- 'pangenomeSimulation'
 
-  cat('DONE\n')
-  return(out)
+
+
+
+
+
+
+  # ########################
+  # ## Generate sequences ##
+  # ########################
+  #
+  # # Takes the mut data.frame and applies substitutions cronologically to each
+  # # gene. Then removes sequences according the final panmatrix.
+  # rownames(dfgl) <- 1:(dim(dfgl)[1])
+  # dd <- dim(mmmut[[1]])
+  # rownames(mmmut[[1]]) <- 1:(dd[1])
+  # change.from <- vector('character', dd[1])
+  # change.to <- vector('character', dd[1])
+  # allcodons <- dimnames(smat)[[1]]
+  # allDes <- Descendants(phy, type = 'tips')
+  #
+  # cat(paste0('Writing groups of orthologous at "', dir_out, '" .\n'))
+  # dir.create(dir_out)
+  # for (i in seq_len(dpm[2])){
+  #
+  #   ge <- genes[[i]]
+  #   nn <- attr(ge, 'name')
+  #   ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
+  #   ch <- mmmut[[1]][which(mmmut[[2]]==nn),,drop=FALSE]
+  #   rns <- as.integer(rownames(ch))
+  #   gna <- colnames(pm)[i]
+  #   og <- rep(list(ge), norg)
+  #   names(og) <- paste0(phy$tip.label, '_', gna, ' ref:', nn)
+  #
+  #   for (j in seq_len(dim(ch)[1])){
+  #     # dsc <- Descendants(phy, ch[j, 3L])[[1]]
+  #     # dsc <- phangorn:::bip(phy)[ch[j, 3L]][[1]]
+  #     dsc <- allDes[[.subset2(ch, j, 3)]]
+  #     rnsj <- .subset2(rns, j)
+  #     chj5 <- .subset2(ch, j, 5L)
+  #     change.from[rnsj] <- og[[dsc[1]]][chj5]
+  #     change.to[rnsj] <- sample(allcodons, 1, prob = .subset2(smat, change.from[rnsj]))
+  #     for (k in seq_along(dsc)){
+  #       og[[dsc[k]]][chj5] <- change.to[rnsj]
+  #     }
+  #   }
+  #
+  #   og <- lapply(og, paste0, collapse='')
+  #
+  #   aaa <- pm[, i]
+  #   class(aaa) <- 'logical'
+  #   og <- og[paste0(names(which(aaa)), '_', gna, ' ref:', nn)]
+  #
+  #   write.fasta(sequences = og,
+  #               names = names(og),
+  #               file.out = paste0(dir_out, '/', gna,'.fasta'))
+  # }
+  #
+  # dfmut <- as.data.frame(mmmut[[1]])
+  # dfmut$change.from <- change.from
+  # dfmut$change.to <- change.to
+  # dfmut$gene <- mmmut[[2]]
+  #
+  # ############
+  # ## Return ##
+  # ############
+  #
+  # # Return a list with a coalescent tree, a data.frame representing the
+  # # gain-loss events, another one representing mutation events, and the final
+  # # panmatrix. Also some attributes regarding input parameters are returned.
+  #
+  # out <- list(phy, dfgl, dfmut, pm)
+  # names(out) <- c('coalescent', 'gain-loss', 'substitutions', 'panmatrix')
+  # attr(out, 'reference') <- normalizePath(ref)
+  # attr(out, 'norg') <- norg
+  # attr(out, 'ngenes') <- ngenes
+  # attr(out, 'ne') <- ne
+  # attr(out, 'ggr') <- ggr
+  # attr(out, 'glr') <- glr
+  # attr(out, 'mu') <- mu
+  # attr(out, 'dir_out') <- dir_out
+  # attr(out, 'class') <- 'pangenomeSimulation'
+  #
+  # cat('DONE\n')
+  # return(out)
 
 }
 
