@@ -5,7 +5,7 @@
 
 ## Simulate gene gain and loss
 #' @importFrom phangorn Descendants
-#' @importFrom stats runif rbinom
+#' @importFrom stats runif rbinom setNames
 #' @importFrom reshape2 melt
 #' @author Ignacio Ferres
 .sim_gl <- function(phy, m, brti, ne, norg, ou, ov, mrca_acc_o){
@@ -186,6 +186,7 @@
 
 
 #' @importFrom ape getMRCA nodepath
+#' @importFrom stats setNames rpois
 #' @importFrom phangorn Descendants
 .sim_mut <- function(pm, phy, nsites, m, depth, brti, ne, norg, mu, smat){
 
@@ -248,7 +249,7 @@
           # trials <- ngen * nsites
           # # This produces NAs because expects class(trials) == 'integer' :
           # rbinom(1, size = trials, prob = mu)
-          # # This produces NaNs:
+          # # Seen on stackoverflow but also produces NaNs:
           # qbinom(runif(1), trials, mu, FALSE)
 
           # Approximation with poisson  ¯\_(ツ)_/¯ :
