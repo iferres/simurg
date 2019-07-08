@@ -1,32 +1,68 @@
 #' @name simpg
 #' @title Simulate a bacterial pangenome
 #' @description Simulate the evolution of a pangenome using a random coalescent
-#' tree as guide, according to the neutral model and the Infinite Many Genes
+#' tree as guide, according to the neutral model and the Infinitely Many Genes
 #' (IMG) model.
-#' The algorithm first simulates a random coalescent tree (\link[ape]{rcoal}).
+#' The algorithm first simulates a random coalescent tree (\link[ape]{rcoal})
+#' describing the evolutionary history of organisms sampled at the final time.
+#' Effective population size (ne) is also interpreted as the number of
+#' generations from the MRCA to the sampling time.
 #'
-#' Then, random deviates from the expected number of gene gain and loss
-#' according to branch length and parameters (\code{ggr} and \code{glr}), are
-#' used to simulate gene birth and death along the tree. Since the IMG model is
-#' used, genes are only transmited vertically from generation to generation.
+#' Then, a IMG process is simulated using this tree, and parameters C (coregenome
+#' size), u (probability of gene gain, per generation), and v (probability of
+#' gene loss, per generation). At the end of this process a final panmatrix is
+#' obtained, describing the presence or absence of each gene for each organism,
+#' at the sampling time. The final gene presence/absence pattern is in
+#' accordance with the previously simulated coalescent tree, as the model
+#' describes.
 #'
-#' Point mutations are simulated following a similar process as the above:
-#' random deviates from the expected number of mutations according to branch
-#' length and mutation rate, are used. Mutations are then distributed along
-#' sites with uniform probability. By default stop codons are avoided. (note:
-#' actually, codons and not sites are conditioned to mutation. See \code{smat}
-#' parameter below).
+#' As many genes as in the above panmatrix are sampled from the reference
+#' file (ref). For each one the MRCA node in the tree is identified, and from
+#' this node to the final time the gene is subjected to mutations at rate mu
+#' (probability of substitution, per generation). Genes are first replicated
+#' as many times it appears at the final time, and mutations are computed in
+#' accordance to the simulated tree (each gene will follow an independent path).
+#' This implementation mutates codons, rather than single nucleotides, because
+#' we wanted to be able to avoid stop codons of being created at the middle of
+#' a gene. The probability of substitution from one codon to another is decribed
+#' by the \code{smat} parameter, which by defaults assigns equal probability of
+#' changing one codon to another with a single nucleotide difference between
+#' them, 0 probability of changing from one codon to another with more than one
+#' difference, and 0 probability of changing from any codon to a stop codon.
+#' This behavior can be changed by modifying smat parameter, which by default
+#' takes the substitution matrix \code{'.codon.subst.mat'} in the namespace of
+#' this package. To see a reference of how it was created, the file subs_mat.R
+#' in the package source shows details, and can be taken as guide to create a
+#' custom one.
 #'
-#' Finally, sequences are sampled from \code{ref} and a pangenome is generated
-#' following the evolutionary history simulated above.
+#' Finally, sequences are written to the output directory (dir_out) by gene
+#' (group of orthologous sequences), or by genome, in fasta format. Each header
+#' contains information about which gene in the reference file was used to
+#' generate it. One can set the algorithm to be able to sample genes from the
+#' reference file with replace (replace = TRUE), but it is not recommended
+#' since the IMG model states that each gene only is gained once in the
+#' evolutionary history of the pan organism (so replace = FALSE, by default,
+#' and gives error if number of columns in the final panmatrix is greater than
+#' available genes in ref), although if it is set to TRUE, each copy will
+#' follow an independent evolutionary path.
+#'
 #' @param ref A multi-fasta file from where to sample genes.
 #' @param norg The number of organisms sampled.
-#' @param ne Effective population number. For E coli is ~25 million
-#' (Charlesworth et al., 2009). This is also the number of generations.
-#' @param C The coregenome size.
-#' @param u Probability of gene gain per generation.
-#' @param v Probability of gene loss rate per generation.
-#' @param mu The per site per generation substitution rate.
+#' @param ne Effective population number. Baumdicker et al. (2012) estimates
+#' the effective population sizes of Prochlorococcus and Synechococcus to be
+#' around 10e11, which was taken as default. This is also the number of
+#' generations from the MRCA to the sampled (final) organisms.
+#' @param C The coregenome size (default is 100).
+#' @param u Probability of gene gain per generation. Default is 1e-8, to be in
+#' accordance to values presented in Baumdicker et al. (2012). (theta = 2Ne*u,
+#' and taking Ne = 10e11, and estimates of theta ~2000 for Prochlorococcus).
+#' @param v Probability of gene loss rate per generation. Default is 1e-11, to
+#' be in accordance to values presented in Baumdicker et al. (2012). (rho = 2Ne*v,
+#' and taking Ne = 10e11, and estimates of rho ~2 for Prochlorococcus).
+#' @param mu The per site per generation substitution rate. According to Duchene
+#' et al. (2016), a typical substitution rate is around 1e-5 and 1e-9 per site,
+#' per annum. Taking 1e-9, and assuming 200 generation per annum (Shierup and Wuif,
+#' 2010), this gives mu = 5e-12, which was taken as default.
 #' @param write_by One of \code{'gene'} of \code{'genome'}. Whether to write
 #' sequences in files grouped by orthology or by genome, respectively.
 #' @param dir_out The non-existent directory where to put the simulated
@@ -49,13 +85,19 @@
 #' to use the default as reference: \code{simba:::.codon.subst.mat} .
 #' See package source (R/subs_mat.R) for a guide on how to generate a similar
 #' matrix.
+#' @param force \code{logical}. If \code{dir_out} exists, whether to force
+#' directory creation by overwriting the existing one. It will eliminate any
+#' existing content.
+#' @param verbose \code{logical}. Show (or not) progress messages.
 #' @return A \code{list} of length 4. (1) The coalescent phylogenetic tree, (2)
 #' a \code{data.frame} with the gene gain-loss events, (3) a \code{data.frame}
 #' with the substitution events, and (4) the panmatrix. Also a series of
 #' attributes are returned.
 #' @importFrom seqinr read.fasta write.fasta
+#' @importFrom stats rpois setNames
 #' @importFrom ape rcoal coalescent.intervals branching.times
 #' @importFrom phangorn Descendants
+#' @importFrom utils txtProgressBar setTxtProgressBar capture.output str
 #' @author Ignacio Ferres
 #' @export
 simpg <- function(ref='pan_genome_reference.fa',
