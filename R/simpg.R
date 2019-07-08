@@ -386,7 +386,8 @@ simpg <- function(ref='pan_genome_reference.fa',
     sgmt <- unique(unlist(sgmt, use.names = FALSE))
     for (j in sgmt){
       #Get mutation position (in codon coordinates)
-      mt <- as.integer(ceiling(muts[[j]]/3))
+      # mt <- as.integer(ceiling(muts[[j]]/3))
+      mt <- muts[[j]]
       #Get sequences to apply changes
       dss <- allDes[[as.integer(strsplit(j, '-')[[1]][2])]]
       orgs <- phy$tip.label[dss] # orgs are all organisms which descend from this node

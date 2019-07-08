@@ -258,6 +258,7 @@
           if (nmut){
             # Distribute substitutions with uniform probability
             smut <- sample(seq_len(nsites[g]), nmut, replace = TRUE)
+            smut <- as.integer(ceiling(smut/3))
             muts[[psg]] <- smut
           }else{
             muts[[psg]] <- NA_integer_
