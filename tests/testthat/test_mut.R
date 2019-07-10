@@ -1,6 +1,6 @@
 context('Simulating mutations.')
 
-library(ape)
+# library(ape)
 phy <- structure(list(edge = structure(c(11L, 13L, 19L, 19L, 13L, 18L,
                                          18L, 11L, 12L, 15L, 15L, 16L, 16L, 12L, 14L, 14L, 17L, 17L, 13L,
                                          19L, 1L, 2L, 18L, 3L, 4L, 12L, 15L, 5L, 16L, 6L, 7L, 14L, 8L,
@@ -16,13 +16,11 @@ phy <- structure(list(edge = structure(c(11L, 13L, 19L, 19L, 13L, 18L,
 
 m <- as.data.frame(phy$edge)
 m$length <- phy$edge.length
-
+norg <- 10
 depth <- coalescent.intervals(phy)$total.depth
 brti <- c(structure(rep(0, norg), names=1:norg), branching.times(phy))
 ne <- 1e10
-norg <- 10
 mu <- 5e-12
-nsites <- rep(100, dim(pm)[2])
 smat <- simba:::.codon.subst.mat
 
 pm <- structure(c(0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1,
@@ -257,6 +255,8 @@ pm <- structure(c(0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1,
                                                                                                          "gene347", "gene348", "gene349", "gene350", "gene351", "gene352",
                                                                                                          "gene353", "gene354", "gene355", "gene356", "gene357", "gene358",
                                                                                                          "gene359")))
+
+nsites <- rep(100, dim(pm)[2])
 
 muts <- simba:::.sim_mut(pm = pm,
                          phy = phy,

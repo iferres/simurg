@@ -1,6 +1,6 @@
 context('Simulating gene gain and loss.')
 
-library(ape)
+# library(ape)
 
 ne <- 1e10
 ou <- 1e-8
@@ -39,7 +39,7 @@ pm <- simba:::.sim_gl(phy = phy,
 
 test_that('.sim_gl works',{
   expect_is(pm, 'matrix')
-  expect_identical(dim(pm)[1], norg)
+  expect_equivalent(dim(pm)[1], norg)
   expect_identical(dimnames(pm)[[1]], paste0('genome', 1:norg))
   expect_true(all(sapply(pm, is.numeric)))
 })
