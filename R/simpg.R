@@ -560,6 +560,7 @@ summary.pangenomeSimulation <- function(object, ...){
 
   cat('$IMG \n')
 
+  norg <- attrs$norg
   ne <- attrs$ne
   C <- attrs$C
   u <- attrs$u
