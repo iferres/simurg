@@ -91,7 +91,7 @@
 #' @param verbose \code{logical}. Show (or not) progress messages.
 #' @return An object of class \code{pangenomeSimulation}, which consist in a
 #' list of 4 elements: (1) The simulated coalescent, as an object of class
-#' \link[ape::read.tree]{phylo} (ape package); (2) A list with gene families;
+#' \link[ape:read.tree]{phylo} (ape package); (2) A list with gene families;
 #' (3) The panmatrix; and (4) a list with substitution codon position for each
 #' gene, per branch, since gene birth to sampling time. Also a series of
 #' attributes are returned, with calling parameters. A summary method is also
