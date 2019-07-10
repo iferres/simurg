@@ -541,7 +541,7 @@ print.pangenomeSimulation <- function(x, ...){
   cat(paste('   Probability of gene gain, per generation:  \u03C5 =', attrs$u, '\n'))
   cat(paste('   Probability of gene loss, per generation:  \u03BD =', attrs$v, '\n'))
   cat(' Substitution parameters:\n')
-  cat(paste('   Probability of substitution, per generation:   \u03BC =', mu, '\n'))
+  cat(paste('   Probability of substitution, per generation:   \u03BC =', attrs$mu, '\n'))
   cat(paste(' Fasta reference file at', attrs$ref, '\n'))
   cat(paste(' Sequences written at', attrs$dir_out, '\n'))
 
