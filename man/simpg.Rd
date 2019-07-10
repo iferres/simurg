@@ -119,6 +119,40 @@ and gives error if number of columns in the final panmatrix is greater than
 available genes in ref), although if it is set to TRUE, each copy will
 follow an independent evolutionary path.
 }
+\examples{
+\dontrun{
+library(simba)
+
+ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+untar(tarfile = ref_file)
+ref <- 'ref_tutorial.fasta'
+
+pg <- simpg(ref = ref, norg = 10, ne = 1e10, C = 100, u = 1e-8, v = 1e-11,
+            mu = 5e-12, write_by = 'genome', dir_out = 'sim_pg',
+            replace = TRUE)
+
+summary(pg)
+}
+}
+\references{
+Baumdicker, F., Hess, W. R., & Pfaffelhuber, P. (2010). "The
+Diversity of a Distributed Genome in Bacterial Populations". The Annals of
+Applied Probability.
+
+Baumdicker, F., Hess, W. R., & Pfaffelhuber, P. (2012). "The Infinitely Many
+Genes Model for the Distributed Genome of Bacteria". Genome Biology and
+Evolution.
+
+Duchene, S. (2016). "Genome-scale rates of evolutionary change in bacteria".
+Microbial Genomics.
+
+Ashley Robinson, D., Falush, D. Fiel, E. J. (2010). "Bacterial Population
+Genetics in Infectious Disease." Wiley-Blackwell, Chapter 1: "The Coalescent
+of Bacterial Populations"; Section 1.5; Schierup, M. H. & Wiuf, C. "From
+Coalescent Time to Real Time".
+
+Kimura, M. (1983). "The neutral theory of molecular evolution". Cambridge.
+}
 \author{
 Ignacio Ferres
 }

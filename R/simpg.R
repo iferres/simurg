@@ -93,7 +93,25 @@
 #' a \code{data.frame} with the gene gain-loss events, (3) a \code{data.frame}
 #' with the substitution events, and (4) the panmatrix. Also a series of
 #' attributes are returned.
-#' @example
+#' @references Baumdicker, F., Hess, W. R., & Pfaffelhuber, P. (2010). "The
+#' Diversity of a Distributed Genome in Bacterial Populations". The Annals of
+#' Applied Probability.
+#'
+#' Baumdicker, F., Hess, W. R., & Pfaffelhuber, P. (2012). "The Infinitely Many
+#' Genes Model for the Distributed Genome of Bacteria". Genome Biology and
+#' Evolution.
+#'
+#' Duchene, S. (2016). "Genome-scale rates of evolutionary change in bacteria".
+#' Microbial Genomics.
+#'
+#' Ashley Robinson, D., Falush, D. Fiel, E. J. (2010). "Bacterial Population
+#' Genetics in Infectious Disease." Wiley-Blackwell, Chapter 1: "The Coalescent
+#' of Bacterial Populations"; Section 1.5; Schierup, M. H. & Wiuf, C. "From
+#' Coalescent Time to Real Time".
+#'
+#' Kimura, M. (1983). "The neutral theory of molecular evolution". Cambridge.
+#'
+#' @examples
 #' \dontrun{
 #' library(simba)
 #'
@@ -106,7 +124,6 @@
 #'             replace = TRUE)
 #'
 #' summary(pg)
-#'
 #' }
 #' @importFrom seqinr read.fasta write.fasta
 #' @importFrom stats rpois setNames
