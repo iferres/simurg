@@ -93,11 +93,27 @@
 #' a \code{data.frame} with the gene gain-loss events, (3) a \code{data.frame}
 #' with the substitution events, and (4) the panmatrix. Also a series of
 #' attributes are returned.
+#' @example
+#' \dontrun{
+#' library(simba)
+#'
+#' ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+#' untar(tarfile = ref_file)
+#' ref <- 'ref_tutorial.fasta'
+#'
+#' pg <- simpg(ref = ref, norg = 10, ne = 1e10, C = 100, u = 1e-8, v = 1e-11,
+#'             mu = 5e-12, write_by = 'genome', dir_out = 'sim_pg',
+#'             replace = TRUE)
+#'
+#' summary(pg)
+#'
+#' }
 #' @importFrom seqinr read.fasta write.fasta
 #' @importFrom stats rpois setNames
 #' @importFrom ape rcoal coalescent.intervals branching.times
 #' @importFrom phangorn Descendants
 #' @importFrom utils txtProgressBar setTxtProgressBar capture.output str
+#' @importFrom reshape2 melt
 #' @author Ignacio Ferres
 #' @export
 simpg <- function(ref='pan_genome_reference.fa',
@@ -136,13 +152,14 @@ simpg <- function(ref='pan_genome_reference.fa',
 
 
   if (dir.exists(dir_out)){
-    stop('dir_out already exists. Use force=TRUE to overwrite it.')
+    dir_out <- normalizePath(dir_out)
+    if (force){
+      unlink(dir_out, recursive = TRUE)
+      dir.create(dir_out)
+    }else{
+      stop('dir_out already exists. Use force=TRUE to overwrite it.')
+    }
   }else{
-    dir.create(dir_out)
-  }
-
-  if (dir.exists(dir_out) & force){
-    unlink(dir_out, recursive = TRUE)
     dir.create(dir_out)
   }
 
@@ -209,6 +226,34 @@ simpg <- function(ref='pan_genome_reference.fa',
     rf <- rf[-w]
   }
 
+
+  ##############################
+  ## Simulate coalescent tree ##
+  ##############################
+  if (verbose) message('Simulating coalescent tree, \u03C4')
+  # cat('Simulating coalescent tree.\n')
+  phy <- rcoal(norg, tip.label = paste0('genome', 1:norg))
+
+  m <- as.data.frame(phy$edge)
+  m$length <- phy$edge.length
+
+  depth <- coalescent.intervals(phy)$total.depth
+  brti <- c(structure(rep(0, norg), names=1:norg), branching.times(phy))
+  if (verbose){
+    mssg <- paste(capture.output(summary(phy))[-c(1:3)], collapse = '\n')
+    message(mssg)
+  }
+
+  #################################
+  ## Simulate gene gain and loss ##
+  #################################
+
+  # On this step, gene birth and death is simulated in order to obtain a
+  # panmatrix at the end of this stage (IMG model).
+  if (verbose){
+    mssg <- ' Simulating gene gain and loss.'
+    message(mssg)
+  }
   ############################
   ## Derived IMG parameters ##
   ############################
@@ -240,30 +285,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     message(paste(mssg, collapse = '\n'))
   }
 
-  ##############################
-  ## Simulate coalescent tree ##
-  ##############################
-  if (verbose) message('Simulating coalescent tree, \u03C4')
-  # cat('Simulating coalescent tree.\n')
-  phy <- rcoal(norg, tip.label = paste0('genome', 1:norg))
 
-  m <- as.data.frame(phy$edge)
-  m$length <- phy$edge.length
-
-  depth <- coalescent.intervals(phy)$total.depth
-  brti <- c(structure(rep(0, norg), names=1:norg), branching.times(phy))
-  if (verbose){
-    mssg <- paste(capture.output(summary(phy))[-c(1:3)], collapse = '\n')
-    message(mssg)
-  }
-
-  #################################
-  ## Simulate gene gain and loss ##
-  #################################
-
-  # On this step, gene birth and death is simulated in order to obtain a
-  # panmatrix at the end of this stage (IMG model).
-  cat('Simulating gene gain and loss.\n')
   pm <- .sim_gl(phy = phy,
                 m = m,
                 ne = ne,
@@ -324,7 +346,7 @@ simpg <- function(ref='pan_genome_reference.fa',
                     smat = smat)
 
   if (verbose){
-    mssg1 <- 'Number and position of substitutions branch-wise simulated:\n'
+    mssg1 <- 'Number and codon position of substitutions branch-wise simulated:\n'
     mssg2 <- paste(capture.output(str(mmmut, list.len = 3)), collapse = '\n')
     mssg <- c(mssg1, mssg2)
     message(mssg)
@@ -412,6 +434,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     gnn <- names(og)
     names(og) <- paste0(gnn, '_', gna, ' ref:', nn)
 
+    # Write bt gene or by genome
     if (write_by == 'gene'){
       write.fasta(sequences = og,
                   names = names(og),
@@ -443,93 +466,177 @@ simpg <- function(ref='pan_genome_reference.fa',
   ## Return ##
   ############
 
+  if (verbose){
+    message('Preparing output.')
+  }
+
+  # Prepare gene list
+  lst <- melt(apply(pm, 2, function(x){names(x[which(as.logical(x))])}))
+  lst <- unclass(by(lst, lst[[2]], function(x){
+    paste(x[[1]], x[[2]], sep = '_')
+  }))
+  names(lst) <- names(genes)
+
+  # Prepare final output
+  out <- list(coalescent = phy,
+              gene_list = lst,
+              panmatrix = pm,
+              substitutions = mmmut)
+
+  # Add attributes
+  attr(out, 'reference') <- normalizePath(ref)
+  attr(out, 'norg') <- norg
+  attr(out, 'ne') <- ne
+  attr(out, 'C') <- C
+  attr(out, 'u') <- u
+  attr(out, 'otheta') <- otheta
+  attr(out, 'v') <- v
+  attr(out, 'orho') <- orho
+  attr(out, 'mu') <- mu
+  attr(out, 'dir_out') <- normalizePath(dir_out)
+  attr(out, 'write_by') <- write_by
+  attr(out, 'class') <- 'pangenomeSimulation'
+
+
+  if (verbose){
+    message('Finnish!')
+  }
+
+  return(out)
+}
 
 
 
 
 
+print.pangenomeSimulation <- function(x, ...){
+
+  attrs <- attributes(x)
+  # theta <- 2 * attrs$ne * attrs$u
+  # rho <- 2 * attrs$ne * attrs$v
+  cat('Object of class "pangenomeSimulation".\n')
+  cat(paste(' Number of sampled organisms: ', attrs$norg, '\n'))
+  cat(paste(' Effective Population Size: ', attrs$ne, '\n'))
+  cat(' IMG parameters:\n')
+  cat(paste('   Coregenome size: ', attrs$C, '\n'))
+  cat(paste('   Probability of gene gain, per generation:  \u03C5 =', attrs$u, '\n'))
+  cat(paste('   Probability of gene loss, per generation:  \u03BD =', attrs$v, '\n'))
+  cat(' Substitution parameters:\n')
+  cat(paste('   Probability of substitution, per generation:   \u03BC =', mu, '\n'))
+  cat(paste(' Fasta reference file at', attrs$ref, '\n'))
+  cat(paste(' Sequences written at', attrs$dir_out, '\n'))
+
+}
 
 
+#' @export
+summary.pangenomeSimulation <- function(object, ...){
 
-  # ########################
-  # ## Generate sequences ##
-  # ########################
-  #
-  # # Takes the mut data.frame and applies substitutions cronologically to each
-  # # gene. Then removes sequences according the final panmatrix.
-  # rownames(dfgl) <- 1:(dim(dfgl)[1])
-  # dd <- dim(mmmut[[1]])
-  # rownames(mmmut[[1]]) <- 1:(dd[1])
-  # change.from <- vector('character', dd[1])
-  # change.to <- vector('character', dd[1])
-  # allcodons <- dimnames(smat)[[1]]
-  # allDes <- Descendants(phy, type = 'tips')
-  #
-  # cat(paste0('Writing groups of orthologous at "', dir_out, '" .\n'))
-  # dir.create(dir_out)
-  # for (i in seq_len(dpm[2])){
-  #
-  #   ge <- genes[[i]]
-  #   nn <- attr(ge, 'name')
-  #   ge <- paste0(ge[c(T,F,F)],ge[c(F,T,F)],ge[c(F,F,T)])
-  #   ch <- mmmut[[1]][which(mmmut[[2]]==nn),,drop=FALSE]
-  #   rns <- as.integer(rownames(ch))
-  #   gna <- colnames(pm)[i]
-  #   og <- rep(list(ge), norg)
-  #   names(og) <- paste0(phy$tip.label, '_', gna, ' ref:', nn)
-  #
-  #   for (j in seq_len(dim(ch)[1])){
-  #     # dsc <- Descendants(phy, ch[j, 3L])[[1]]
-  #     # dsc <- phangorn:::bip(phy)[ch[j, 3L]][[1]]
-  #     dsc <- allDes[[.subset2(ch, j, 3)]]
-  #     rnsj <- .subset2(rns, j)
-  #     chj5 <- .subset2(ch, j, 5L)
-  #     change.from[rnsj] <- og[[dsc[1]]][chj5]
-  #     change.to[rnsj] <- sample(allcodons, 1, prob = .subset2(smat, change.from[rnsj]))
-  #     for (k in seq_along(dsc)){
-  #       og[[dsc[k]]][chj5] <- change.to[rnsj]
-  #     }
-  #   }
-  #
-  #   og <- lapply(og, paste0, collapse='')
-  #
-  #   aaa <- pm[, i]
-  #   class(aaa) <- 'logical'
-  #   og <- og[paste0(names(which(aaa)), '_', gna, ' ref:', nn)]
-  #
-  #   write.fasta(sequences = og,
-  #               names = names(og),
-  #               file.out = paste0(dir_out, '/', gna,'.fasta'))
-  # }
-  #
-  # dfmut <- as.data.frame(mmmut[[1]])
-  # dfmut$change.from <- change.from
-  # dfmut$change.to <- change.to
-  # dfmut$gene <- mmmut[[2]]
-  #
-  # ############
-  # ## Return ##
-  # ############
-  #
-  # # Return a list with a coalescent tree, a data.frame representing the
-  # # gain-loss events, another one representing mutation events, and the final
-  # # panmatrix. Also some attributes regarding input parameters are returned.
-  #
-  # out <- list(phy, dfgl, dfmut, pm)
-  # names(out) <- c('coalescent', 'gain-loss', 'substitutions', 'panmatrix')
-  # attr(out, 'reference') <- normalizePath(ref)
-  # attr(out, 'norg') <- norg
-  # attr(out, 'ngenes') <- ngenes
-  # attr(out, 'ne') <- ne
-  # attr(out, 'ggr') <- ggr
-  # attr(out, 'glr') <- glr
-  # attr(out, 'mu') <- mu
-  # attr(out, 'dir_out') <- dir_out
-  # attr(out, 'class') <- 'pangenomeSimulation'
-  #
-  # cat('DONE\n')
-  # return(out)
+  cat('Summary of object of class pangenomeSimulation:\n')
+  attrs <- attributes(object)
+  ret <- list(IMG = NULL, Substitutions = NULL)
 
+  summary(object$coalescent)
+  cat('\n')
+
+  cat('$IMG \n')
+
+  ne <- attrs$ne
+  C <- attrs$C
+  u <- attrs$u
+  v <- attrs$v
+  otheta <- attrs$otheta
+  orho <- attrs$orho
+  mu <- attrs$mu
+
+  pm <- object$panmatrix
+  dpm <- dim(pm)
+  rs <- rowSums(pm)
+  cs <- colSums(pm)
+
+
+  theta <- 2 * ne * u
+  rho <- 2 * ne * v
+  #theoric mrca accessory size
+  mrca_acc_t <- theta / rho
+  #observed mrca accessory size
+  mrca_acc_o <- round(otheta / orho)
+  EG <- C + theta * sum(1/(rho + 0:(norg-1)))
+
+  mssg1 <- ' IMG parameters:'
+  mssg2 <- paste(' # Core genome size, C =', C)
+  mssg3 <- paste(' # Probability of gene gain,', ' \u03C5 =', u)
+  mssg4 <- paste(' # Probability of gene loss,', '\u03BD =', v)
+  mssg5 <- paste(' # Number of generations, Ne = ', ne)
+  mssg6 <- paste(' Derived from parameters:')
+  mssg7 <- paste(' # \u03F4 = 2Ne', '\u03C5 =', theta)
+  mssg8 <- paste(' # \u03C1 = 2Ne', '\u03BD =', rho)
+  mssg9 <- paste(' # Theorical MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
+  mssg10 <- paste(' # Simulated MRCA size: C + Poi(\u03F4 / \u03C1) = ', C+mrca_acc_o)
+  mssg11 <- paste(' # Expected pangenome size: E[G] = C + \u03F4 * sum( 1 / (\u03C1 + 0:',norg-1,') ) = ',format(EG), sep = '')
+  mssg12 <- paste(' # Observed pangenome size: dim( *$panmatrix )[2] =', dpm[2])
+  mssg13 <- paste(' # Expected average number of genes per genome: E[A] = C + ( \u03F4 / \u03C1 ) = ',  C+mrca_acc_t)
+  mssg14 <- paste(' # Observed number of genes per genome: rowSums( *$panmatrix ) =\n')
+  mssg <- c(mssg1, mssg2, mssg3, mssg4, mssg5,
+            mssg6, mssg7, mssg8, mssg9, mssg10,
+            mssg11, mssg12, mssg13, mssg14)
+  cat(paste(mssg, collapse = '\n'))
+  print(rs)
+  cat(' # Gene family frequency: \n')
+  print(table(cs, dnn = NULL))
+
+
+  cat('\n')
+
+  # Substitutions acumulated since gene birth
+  cat('$Substitutions \n')
+  muts <- object$substitutions
+  phy <- object$coalescent
+  tipl <- phy$tip.label
+  orix <- seq_along(tipl)
+  sums <- rep(0, length(orix))
+  names(sums) <- orix
+  brsu <- lapply(muts, function(x) sapply(x, function(y) length(y[!is.na(y)])))
+  nmut <- names(muts)
+  res <- vector('list', length = dpm[2])
+  for (i in seq_along(brsu)){
+    brsi <- brsu[[i]]
+    brcs <- brsi
+    brcs[] <- NA_integer_
+    isna <- is.na(brcs)
+    tonod <- sapply(strsplit(names(brcs), '-'), '[', 2)
+    istip <- tonod %in% as.character(orix)
+    while (any(isna)) {
+      fi <- names(which(isna)[1])
+      ssp <- strsplit(fi, '-')[[1]]
+      hasparent <- which(tonod==ssp[1])
+      if (length(hasparent)){
+        brcs[fi] <- brcs[hasparent] + brsi[fi]
+      }else{
+        brcs[fi] <- brsi[fi]
+      }
+      isna <- is.na(brcs)
+    }
+    ensu <- brcs[istip]
+    names(ensu) <- sapply(strsplit(names(ensu), '-'), '[', 2)
+    res[[i]] <- data.frame(genome = names(ensu),
+                           gene = dimnames(pm)[[2]][i],
+                           ref = nmut[i],
+                           acc_mut = ensu)
+    # sums[names(ensu)] <- sums[names(ensu)] + ensu
+    # res[[i]] <- ensu
+  }
+
+  res <- do.call(rbind, res)
+  rownames(res) <- NULL
+  res$genome <- tipl[res$genome]
+  cat('Accumulated mutations since gene birth:\n')
+  str(res)
+  cat('Accumulated mutations since gene birth, by genome:\n')
+  print(tapply(res$acc_mut, res$genome, sum))
+  ret$Substitutions <- res
+
+  return(invisible(ret))
 }
 
 
