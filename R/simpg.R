@@ -492,6 +492,8 @@ simpg <- function(ref='pan_genome_reference.fa',
   lst <- unclass(by(lst, lst[[2]], function(x){
     paste(x[[1]], x[[2]], sep = '_')
   }))
+  attr(lst, 'class') <- NULL
+  attr(lst, "call") <- NULL
   names(lst) <- names(genes)
 
   # Prepare final output
