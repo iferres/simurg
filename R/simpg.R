@@ -534,7 +534,7 @@ simpg <- function(ref='pan_genome_reference.fa',
 
 
 
-
+#' @export
 print.pangenomeSimulation <- function(x, ...){
 
   attrs <- attributes(x)
