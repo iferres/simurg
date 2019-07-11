@@ -93,7 +93,7 @@ summary.pangenomeSimulation <- function(object, ...){
   mssg1 <- ' Parameters:'
   mssg2 <- paste(' # Probability of substitution,  \u03BC =', mu)
   mssg3 <- paste(' # Number of generations, Ne = ', ne)
-  mssg <- c(mssg1, mssg2, mssg4)
+  mssg <- c(mssg1, mssg2, mssg3)
 
   cat(paste(mssg, collapse = '\n'))
   cat('\n')
