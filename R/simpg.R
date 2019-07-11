@@ -396,7 +396,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     # alds <- allDes[[mrca]]
     ge <- genes[[i]]
     nn <- attr(ge, 'name')
-    muts <- mmmut[[nn]]
+    muts <- mmmut[[i]]
     # Unique, since more than 2 substitutions on the same place is
     # seen as a single change. Saturation:
     muts <- lapply(muts, unique)
@@ -497,7 +497,11 @@ simpg <- function(ref='pan_genome_reference.fa',
   }))
   attr(lst, 'class') <- NULL
   attr(lst, "call") <- NULL
-  names(lst) <- names(genes)
+  for (i in seq_along(lst)){
+    attr(lst[[i]], 'name') <- attr(genes[[i]], 'name')
+  }
+
+  # names(lst) <- names(genes)
 
   # Prepare final output
   out <- list(coalescent = phy,

@@ -202,7 +202,7 @@
   # Paths from root to tips
   roottotip <- setNames(nodepath(phy), nm = seq_len(norg))
   # Create structure to store result
-  res_mut <- setNames(vector('list', dim(pm)[2]), names(nsites))
+  res_mut <- setNames(vector('list', dim(pm)[2]), dimnames(pm)[[2]])
 
 
   # Iterate over genes
