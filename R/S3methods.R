@@ -21,7 +21,8 @@ print.pangenomeSimulation <- function(x, ...){
 
 
 
-
+#' @importFrom ape cophenetic.phylo
+#' @importFrom utils combn
 #' @export
 summary.pangenomeSimulation <- function(object, ...){
 
