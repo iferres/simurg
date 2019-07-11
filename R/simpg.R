@@ -90,12 +90,13 @@
 #' existing content.
 #' @param verbose \code{logical}. Show (or not) progress messages.
 #' @return An object of class \code{pangenomeSimulation}, which consist in a
-#' list of 4 elements: (1) The simulated coalescent, as an object of class
+#' list of 5 elements: (1) The simulated coalescent, as an object of class
 #' \link[ape:read.tree]{phylo} (ape package); (2) A list with gene families;
-#' (3) The panmatrix; and (4) a list with substitution codon position for each
-#' gene, per branch, since gene birth to sampling time. Also a series of
-#' attributes are returned, with calling parameters. A summary method is also
-#' provided to retrieve statistics from the simulation.
+#' (3) The panmatrix; (4) a list with substitution codon position for each
+#' gene, per branch, since gene birth to sampling time, and (5) a list of
+#' genetic distances, for each gene family. Also a series of attributes are
+#' returned, with calling parameters. A summary method is also provided to
+#' retrieve statistics from the simulation.
 #' @references Baumdicker, F., Hess, W. R., & Pfaffelhuber, P. (2010). "The
 #' Diversity of a Distributed Genome in Bacterial Populations". The Annals of
 #' Applied Probability.
@@ -111,6 +112,9 @@
 #' Genetics in Infectious Disease." Wiley-Blackwell, Chapter 1: "The Coalescent
 #' of Bacterial Populations"; Section 1.5; Schierup, M. H. & Wiuf, C. "From
 #' Coalescent Time to Real Time".
+#'
+#' Jukes, T. H., Cantor, C. R. (1969). "Evolution of Protein Molecules". New
+#' York: Academic Press.
 #'
 #' Kimura, M. (1983). "The neutral theory of molecular evolution". Cambridge.
 #'
