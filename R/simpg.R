@@ -130,7 +130,7 @@
 #' }
 #' @importFrom seqinr read.fasta write.fasta
 #' @importFrom stats rpois setNames
-#' @importFrom ape rcoal coalescent.intervals branching.times
+#' @importFrom ape rcoal coalescent.intervals branching.times dist.dna as.DNAbin
 #' @importFrom phangorn Descendants
 #' @importFrom utils txtProgressBar setTxtProgressBar capture.output str
 #' @importFrom reshape2 melt
@@ -389,6 +389,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     pb <- txtProgressBar(min = 0, max = dpm[2], style = 3)
   }
 
+  distances <- setNames(vector('list', dpm[2]), nm = colnames(pm))
   for (i in seq_len(dpm[2])){
     gnms <- names(which(pm[, i]==1))
     ngnm <- length(gnms)
@@ -450,6 +451,14 @@ simpg <- function(ref='pan_genome_reference.fa',
       }
     }
 
+    if (length(og)>1){
+      al <- do.call(rbind, lapply(og, function(x){unlist(strsplit(x, ''))}))
+      distances[[i]] <- dist.dna(as.DNAbin(al), model = 'raw')
+    }else{
+      distances[[i]] <- NA_integer_
+    }
+
+
     og <- lapply(og, paste0, collapse = '')
     gnn <- names(og)
     names(og) <- paste0(gnn, '_', gna, ' ref:', nn)
@@ -507,7 +516,8 @@ simpg <- function(ref='pan_genome_reference.fa',
   out <- list(coalescent = phy,
               gene_list = lst,
               panmatrix = pm,
-              substitutions = mmmut)
+              substitutions = mmmut,
+              distances = distances)
 
   # Add attributes
   attr(out, 'reference') <- normalizePath(ref)
@@ -555,17 +565,20 @@ print.pangenomeSimulation <- function(x, ...){
 }
 
 
+
+
 #' @export
 summary.pangenomeSimulation <- function(object, ...){
 
   cat('Summary of object of class pangenomeSimulation:\n')
   attrs <- attributes(object)
-  ret <- list(IMG = NULL, Substitutions = NULL)
+  ret <- list(Gene_family_frecuency = NULL, Evo_dist = NULL)
 
+  phy <- object$coalescent
   summary(object$coalescent)
   cat('\n')
 
-  cat('$IMG \n')
+  cat('** Infinitely Many Genes Model ** \n')
 
   norg <- attrs$norg
   ne <- attrs$ne
@@ -590,7 +603,7 @@ summary.pangenomeSimulation <- function(object, ...){
   mrca_acc_o <- round(otheta / orho)
   EG <- C + theta * sum(1/(rho + 0:(norg-1)))
 
-  mssg1 <- ' IMG parameters:'
+  mssg1 <- ' Parameters:'
   mssg2 <- paste(' # Core genome size, C =', C)
   mssg3 <- paste(' # Probability of gene gain,', ' \u03C5 =', u)
   mssg4 <- paste(' # Probability of gene loss,', '\u03BD =', v)
@@ -609,61 +622,50 @@ summary.pangenomeSimulation <- function(object, ...){
             mssg11, mssg12, mssg13, mssg14)
   cat(paste(mssg, collapse = '\n'))
   print(rs)
-  cat(' # Gene family frequency: \n')
-  print(table(cs, dnn = NULL))
+  cat('$Gene_family_frequency\n')
+  fam_frec <- table(cs, dnn = NULL)
+  ret$IMG <- fam_frec
+  print(fam_frec)
 
 
   cat('\n')
 
-  # Substitutions acumulated since gene birth
-  cat('$Substitutions \n')
-  muts <- object$substitutions
-  phy <- object$coalescent
-  tipl <- phy$tip.label
-  orix <- seq_along(tipl)
-  sums <- rep(0, length(orix))
-  names(sums) <- orix
-  brsu <- lapply(muts, function(x) sapply(x, function(y) length(y[!is.na(y)])))
-  nmut <- names(muts)
-  res <- vector('list', length = dpm[2])
-  for (i in seq_along(brsu)){
-    brsi <- brsu[[i]]
-    brcs <- brsi
-    brcs[] <- NA_integer_
-    isna <- is.na(brcs)
-    tonod <- sapply(strsplit(names(brcs), '-'), '[', 2)
-    istip <- tonod %in% as.character(orix)
-    while (any(isna)) {
-      fi <- names(which(isna)[1])
-      ssp <- strsplit(fi, '-')[[1]]
-      hasparent <- which(tonod==ssp[1])
-      if (length(hasparent)){
-        brcs[fi] <- brcs[hasparent] + brsi[fi]
-      }else{
-        brcs[fi] <- brsi[fi]
-      }
-      isna <- is.na(brcs)
-    }
-    ensu <- brcs[istip]
-    names(ensu) <- sapply(strsplit(names(ensu), '-'), '[', 2)
-    res[[i]] <- data.frame(genome = names(ensu),
-                           gene = dimnames(pm)[[2]][i],
-                           ref = nmut[i],
-                           acc_mut = ensu)
-    # sums[names(ensu)] <- sums[names(ensu)] + ensu
-    # res[[i]] <- ensu
-  }
 
-  res <- do.call(rbind, res)
-  rownames(res) <- NULL
-  res$genome <- tipl[res$genome]
-  cat('Accumulated mutations since gene birth:\n')
-  str(res)
-  cat('Accumulated mutations since gene birth, by genome:\n')
-  print(tapply(res$acc_mut, res$genome, sum))
-  ret$Substitutions <- res
+  cat('** Evolutionary Genetic Model **\n')
+
+  mu <- attrs$mu
+  mssg1 <- ' Parameters:'
+  mssg2 <- paste(' # Probability of substitution,  \u03BC =', mu)
+  mssg3 <- paste(' # Number of generations, Ne = ', ne)
+  mssg <- c(mssg1, mssg2, mssg4)
+
+  cat(paste(mssg, collapse = '\n'))
+  cat('\n')
+
+  muts <- object$substitutions
+  distances <- object$distances
+
+  comb2 <- combn(rownames(object$panmatrix), 2)
+  md <- apply(comb2, 2, function(x){
+    x1 <- x[1]
+    x2 <- x[2]
+    cor <- which(colSums(pm[x, ])==2)
+    mean(sapply(cor, function(y) .subset2(as.matrix(distances[[y]]),x1, x2) ))
+  })
+
+  df <- as.data.frame(t(comb2), stringsAsFactors = FALSE)
+  colnames(df) <- c('G1', 'G2')
+  coph <- cophenetic(phy)
+  # Normalization of cophenetic distances
+  coph <- coph / max(coph)
+  df$norm_cophenetic <- apply(df, 1, function(x){coph[x[1], x[2]]})
+  df$mean_gene_dist <- md
+  ret$Substitutions <- df
+  cat('$Evo_dist \n')
+  str(df)
+
+
 
   return(invisible(ret))
 }
-
 
