@@ -15,7 +15,9 @@ Maintainer: <iferres@pasteur.edu.uy>
 Imports: 
   seqinr,
   phangorn,
-  stats
+  stats,
+  reshape2,
+  utils
 Depends:
   R (>= 3.3.1),
   ape
@@ -23,4 +25,5 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
-RoxygenNote: 6.1.0.9000
+RoxygenNote: 6.1.1
+Suggests: testthat
