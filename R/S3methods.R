@@ -111,7 +111,7 @@ summary.pangenomeSimulation <- function(object, ...){
 
   df <- as.data.frame(t(comb2), stringsAsFactors = FALSE)
   colnames(df) <- c('G1', 'G2')
-  coph <- cophenetic(phy)
+  coph <- cophenetic.phylo(phy)
   # Normalization of cophenetic distances
   coph <- coph / max(coph)
   df$norm_cophenetic <- apply(df, 1, function(x){coph[x[1], x[2]]})
