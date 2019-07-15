@@ -80,7 +80,7 @@ summary.pangenomeSimulation <- function(object, ...){
   print(rs)
   cat('$Gene_family_frequency\n')
   fam_frec <- table(cs, dnn = NULL)
-  ret$IMG <- fam_frec
+  ret$Gene_family_frequency <- fam_frec
   print(fam_frec)
 
 
@@ -116,7 +116,7 @@ summary.pangenomeSimulation <- function(object, ...){
   coph <- coph / max(coph)
   df$norm_cophenetic <- apply(df, 1, function(x){coph[x[1], x[2]]})
   df$mean_gene_dist <- md
-  ret$Substitutions <- df
+  ret$Evo_dist <- df
   cat('$Evo_dist \n')
   str(df)
 
