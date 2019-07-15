@@ -1,5 +1,5 @@
----
-title: "Simulate_a_bacterial_pangenome"
+q---
+title: "Simulate a bacterial pangenome"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Simulate_a_bacterial_pangenome}
@@ -13,7 +13,131 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+This package provides a function to simulate a bacterial pangenome in accordance to the neutral model of mutation, as well as the infinitely many genes model for accessory gene gain and loss proceses. It first generates a random ultrametric tree with as many tips as user defines. Then a process of gene gain and loss is simulated mimicking the Infinitely Many Genes (IMG) model, and obtaining at the end of this step a panmatrix describing the gene presence/absence frequencies at the final time (sampling time). As many genes as columns in the final panmatrix are sampled from a reference multi-fasta file, and each one becomes the most recent common ancestor of each gene family at final time. These gene families will have the presence/absence frequency described in the panmatrix, and each individual gene will follow an evolutionary (mutation) path from the time of gene birth, to the final time, at a given constant rate of substitution and a transition matrix. More details of the algorithm are described in the documentation.
+
+## Example
+
+First load the package to the R session:
+
 
 ```{r setup}
+# Load package..
 library(simba)
+```
+
+
+(package) provides a single function , `simpg()`, and some methods associated to the output class. To access the documentation, run:
+```{r help, eval=FALSE}
+?simpg
+# or
+help('simpg')
+```
+
+This function needs a reference multi-fasta file from where to sample the genes that would be subjected to mutation, and this package provides one for tutorial purposes only since, depending on running parameters, the user would probably need a bigger one. A well suited reference file would be roary's `pan_genome_referebce.fa` output file. For this tutorial we will use the attached reference file, which needs to be first decompressed:
+
+```{r decompress}
+wd <- tempdir() # Set the directory where to decompress to /tmp/
+tgz <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+untar(tarfile = tgz, exdir = wd)
+ref <- list.files(path = wd, pattern = 'ref_tutorial[.]fasta$', full.names = TRUE)
+ref
+```
+
+Now we are ready to run a simulation:
+````{r simulation, results = 'hide'}
+set.seed(12345)
+pg <- simpg(ref = ref, # Reference multi-fasta file
+            norg = 10, # Number of organisms to sample
+            ne = 1e11, # Number of generations from MRCA
+            C = 100,  # Core genome size
+            u = 1e-8, # Probability of gene gain, per generation
+            v = 1e-11, # Probability of gene loss, per generation
+            mu = 5e-12, # Probability of substitution, per site, per generation
+            write_by = 'genome', # Write simulated sequences to files by genome rather by gene family
+            dir_out = paste(wd, 'dir_out', sep = '/'), # Directory where to write sequences
+            replace = TRUE, # Permit gene sampling with replacement
+            force = TRUE, # Force re writing of output directory if exists
+            verbose = TRUE)
+```
+
+Now lets inspect the output:
+
+```{r output}
+pg
+class(pg)
+mode(pg)
+length(pg)
+sapply(pg, class)
+```
+As you see, the class `pangenomeSimulation` consists in a `list` of 5 elements. 
+
+### Coalescent tree
+The first one is the simulated ultrametric tree, of class `phylo` ([ape](https://cran.r-project.org/web/packages/ape/index.html) package). You can, for example, plot it:
+
+```{r, coal}
+plot(pg$coalescent)
+```
+
+### Gene list
+The second one is a gene list, showing each gene family members. 
+```{r, genelist}
+head(pg$gene_list, n = 3)
+```
+
+### Panmatrix
+The third one is the panmatrix. The first columns are core genes, accesory genes are next to them.
+```{r, panmatrix}
+# First five core genes:
+pg$panmatrix[, 1:5]
+# Some accesory genes, for this example:
+pg$panmatrix[, 100:105]
+```
+
+### Substitutions
+Next field shows each substitution (codon position) for each gene, per branch. This list is an anidated list that shows, for each gene, all the substitutions that took place on each branch. The names of the branches indicates the segments formed by 2 subsequet nodes in the tree (`pg$coalescent`); i.e. "11-14" is the segment formed between nodes 11 and 14.
+```{r, substitutions}
+str(pg$substitutions, list.len = 3)
+```
+To see the nodes in the plotted coalescent tree:
+```{r, nodes}
+plot(pg$coalescent)
+nodelabels()
+```
+
+### Distances
+The last field is a list with genetic distances between all pairs of sequences on each gene family.
+```{r, distances}
+head(pg$distances, n = 2)
+```
+
+### Sequences folder
+Finally, sequences are witten at `dir_out`:
+```{r, dirout}
+list.files(path = paste(wd, 'dir_out', sep = '/'), full.names = TRUE)
+```
+The `write_by` parameter allows to write sequences by gene family rather by genome.
+
+### Summary method
+A `summary` method for class `pangenoneSimulation` is also provided:
+
+```{r, summary}
+spg <- summary(pg)
+
+# Gene family frequency
+freqs <- spg$Gene_family_frequency
+barplot(freqs)
+
+# Evolutionary distance (expected vs observed)
+dis <- spg$Evo_dist
+head(dis)
+plot(x = dis$norm_cophenetic, 
+     y = dis$mean_gene_dist, 
+     xlim = c(0, 1), xlab = 'Normalized cophenetic distances',
+     ylim = c(0, 1), ylab = 'Mean genetic distances')
+abline(0, 1)
+```
+
+### Session Information
+```{r rsession}
+sessionInfo()
 ```
