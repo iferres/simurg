@@ -1,14 +1,17 @@
 #' @name simpg
 #' @title Simulate a bacterial pangenome
-#' @description Simulate the evolution of a pangenome using a random coalescent
-#' tree as guide, according to the neutral model and the Infinitely Many Genes
-#' (IMG) model.
-#' The algorithm first simulates a random coalescent tree (\link[ape]{rcoal})
+#' @description Simulate the evolution of a pangenome using a random ultrametric
+#' tree as guide to resemble a coalescent process, and according to both the
+#' neutral model (mutations) and the Infinitely Many Genes (IMG) model (gene
+#' presence/absence).
+#'
+#' @details
+#' The algorithm first simulates a random ultrametric tree (\link[ape]{rcoal})
 #' describing the evolutionary history of organisms sampled at the final time.
 #' Effective population size (ne) is also interpreted as the number of
 #' generations from the MRCA to the sampling time.
 #'
-#' Then, a IMG process is simulated using this tree, and parameters C (coregenome
+#' A IMG process is simulated using this tree, and parameters C (coregenome
 #' size), u (probability of gene gain, per generation), and v (probability of
 #' gene loss, per generation). At the end of this process a final panmatrix is
 #' obtained, describing the presence or absence of each gene for each organism,
@@ -46,19 +49,23 @@
 #' available genes in ref), although if it is set to TRUE, each copy will
 #' follow an independent evolutionary path.
 #'
-#' @param ref A multi-fasta file from where to sample genes.
-#' @param norg The number of organisms sampled.
-#' @param ne Effective population number. Baumdicker et al. (2012) estimates
-#' the effective population sizes of Prochlorococcus and Synechococcus to be
+#' @param ref A multi-fasta file from where to sample genes. Each fasta header
+#' is expected to identify a single gene. Each sampled gene is taken as the
+#' most recent common ancestor of each gene family sampled at the end of the
+#' simulation (final time); in other words, each gene family will coalesce to
+#' each of the original genes sampled from this file.
+#' @param norg The number of organisms sampled at final time.
+#' @param ne Effective population size. Baumdicker et al. (2012) estimates
+#' the effective population sizes of \emph{Prochlorococcus} and \emph{Synechococcus} to be
 #' around 10e11, which was taken as default. This is also the number of
 #' generations from the MRCA to the sampled (final) organisms.
 #' @param C The coregenome size (default is 100).
 #' @param u Probability of gene gain per generation. Default is 1e-8, to be in
 #' accordance to values presented in Baumdicker et al. (2012). (theta = 2Ne*u,
-#' and taking Ne = 10e11, and estimates of theta ~2000 for Prochlorococcus).
+#' and taking Ne = 10e11, and estimates of theta ~2000 for \emph{Prochlorococcus}).
 #' @param v Probability of gene loss rate per generation. Default is 1e-11, to
 #' be in accordance to values presented in Baumdicker et al. (2012). (rho = 2Ne*v,
-#' and taking Ne = 10e11, and estimates of rho ~2 for Prochlorococcus).
+#' and taking Ne = 10e11, and estimates of rho ~2 for \emph{Prochlorococcus}).
 #' @param mu The per site per generation substitution rate. According to Duchene
 #' et al. (2016), a typical substitution rate is around 1e-5 and 1e-9 per site,
 #' per annum. Taking 1e-9, and assuming 200 generation per annum (Shierup and Wuif,
