@@ -1,5 +1,7 @@
 q---
 title: "Simulate a bacterial pangenome"
+author: Ignacio Ferres
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Simulate_a_bacterial_pangenome}
