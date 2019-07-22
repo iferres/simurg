@@ -4,7 +4,7 @@ Title: Simulate Bacterial Pangenomes
 Description: This package is intended to simulate a bacterial pangenome, given
     an initial MRCA, a number of generations, a substitution rate, a gene gain and 
     gene loss rate, and a coalescent tree. Mutations are simulated according to a
-    substitution matrix (neutral by default), and gene gain/loss rate according the
+    substitution matrix (neutral by default), and gene gain/loss rate resembling the
     Infinite Many Genes model.
 Authors@R: c(
     person("Ignacio", "Ferres", email = "iferres@pasteur.edu.uy", role=c("aut","cre")),
