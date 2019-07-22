@@ -4,7 +4,7 @@
 \alias{simpg}
 \title{Simulate a bacterial pangenome}
 \usage{
-simpg(ref = "pan_genome_reference.fa", norg = 10, ne = 1e+11,
+simpg(ref = "pan_genome_reference.fa", norg = 10, br, ne = 1e+11,
   C = 100, u = 1e-08, v = 1e-11, mu = 5e-12, write_by = "gene",
   dir_out = "sim_pg", replace = FALSE, smat, force = FALSE,
   verbose = TRUE)
@@ -17,6 +17,12 @@ simulation (final time); in other words, each gene family will coalesce to
 each of the original genes sampled from this file.}
 
 \item{norg}{The number of organisms sampled at final time.}
+
+\item{br}{\code{numeric} vector of length \code{norg - 1} for setting the
+coalescent branch lengths. By default is calculated as:
+\code{rexp( norg - 1, choose(seq(norg, 2, -1), 2) )}
+as expected by the coalescent theory (see Wakeley, 2008 "Coalescent Theory:
+An Introduction". Roberts & Company Publishers).}
 
 \item{ne}{Effective population size. Baumdicker et al. (2012) estimates
 the effective population sizes of \emph{Prochlorococcus} and \emph{Synechococcus} to be
