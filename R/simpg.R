@@ -55,6 +55,11 @@
 #' simulation (final time); in other words, each gene family will coalesce to
 #' each of the original genes sampled from this file.
 #' @param norg The number of organisms sampled at final time.
+#' @param br \code{numeric} vector of length \code{norg - 1} for setting the
+#' coalescent branch lengths. By default is calculated as:
+#' \code{rexp( norg - 1, choose(seq(norg, 2, -1), 2) )}
+#' as expected by the coalescent theory (see Wakeley, 2008 "Coalescent Theory:
+#' An Introduction". Roberts & Company Publishers).
 #' @param ne Effective population size. Baumdicker et al. (2012) estimates
 #' the effective population sizes of \emph{Prochlorococcus} and \emph{Synechococcus} to be
 #' around 10e11, which was taken as default. This is also the number of
@@ -149,6 +154,7 @@
 #' @export
 simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
+                  br,
                   ne = 1e11,
                   C = 100,
                   u = 1e-8,
@@ -263,7 +269,13 @@ simpg <- function(ref='pan_genome_reference.fa',
   ##############################
   if (verbose) message('Simulating coalescent tree, \u03C4')
   # cat('Simulating coalescent tree.\n')
-  phy <- rcoal(norg, tip.label = paste0('genome', 1:norg))
+  if (missing(br)){
+    br <- rexp(norg - 1, choose(seq(norg, 2, -1), 2))
+  }else{
+    if (!is.numeric(br)) stop('br is not numeric')
+    if (length(br)!= (norg - 1)) stop('br should be of length norg - 1')
+  }
+  phy <- rcoal(norg, tip.label = paste0('genome', 1:norg), br = br)
 
   m <- as.data.frame(phy$edge)
   m$length <- phy$edge.length
