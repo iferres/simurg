@@ -26,17 +26,24 @@ print.pangenomeSimulation <- function(x, ...){
 #' @export
 summary.pangenomeSimulation <- function(object, ...){
 
-  cat('Summary of object of class pangenomeSimulation:\n')
+  cat('Summary of object of class pangenomeSimulation:\n\n')
   attrs <- attributes(object)
-  ret <- list(Gene_family_frecuency = NULL, Evo_dist = NULL)
+  ret <- list(Branching_length = NULL, Gene_family_frecuency = NULL, Evo_dist = NULL)
 
+  cat('** Coalescent ** \n')
   phy <- object$coalescent
   summary(object$coalescent)
+  norg <- attrs$norg
+  br <- attrs$br
+  exp_br <- 2 / ( seq(norg, 2, -1) * (seq(norg, 2, -1) - 1) )
+  brln <- data.frame(Expected = exp_br, Observed = br)
+  ret$Branching_length <- brln
+  cat(' # Coalescent times:')
+  str(brln)
   cat('\n')
 
   cat('** Infinitely Many Genes Model ** \n')
 
-  norg <- attrs$norg
   ne <- attrs$ne
   C <- attrs$C
   u <- attrs$u
