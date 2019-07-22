@@ -47,7 +47,7 @@ ref
 
 Now we are ready to run a simulation:
 ````{r simulation, results = 'hide'}
-set.seed(12345)
+set.seed(555)
 pg <- simpg(ref = ref, # Reference multi-fasta file
             norg = 10, # Number of organisms to sample
             ne = 1e11, # Number of generations from MRCA
