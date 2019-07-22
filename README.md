@@ -11,6 +11,7 @@ if (!require(devtools)) {
     install.packages('devtools')
     library(devtools)
 }
+ 
 install_github('iferres/simba')
 ```
 
@@ -19,6 +20,17 @@ install_github('iferres/simba')
 The main function of `simba` is well documented. Once the package is loaded, please refer to:
 ```r
 help('simpg')
+```
+
+## Vignettes
+
+A vignette is also provided to learn more about this package. If you want to use it you have to build it first when installing `simba`:
+
+
+```r
+library(devtools)
+install_github('iferres/simba', build_vignettes = TRUE)
+vignette('Simulate_a_bacterial_pangenome')
 ```
 
 
