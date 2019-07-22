@@ -139,6 +139,13 @@ plot(x = dis$norm_cophenetic,
 abline(0, 1)
 ```
 
+
+```{r, clean, echo=FALSE}
+unlink(paste(wd, 'dir_out', sep = '/'), recursive = TRUE)
+```
+
+
+
 ### Session Information
 ```{r rsession}
 sessionInfo()
