@@ -551,6 +551,7 @@ simpg <- function(ref='pan_genome_reference.fa',
   # Add attributes
   attr(out, 'reference') <- normalizePath(ref)
   attr(out, 'norg') <- norg
+  attr(out, 'br') <- br
   attr(out, 'ne') <- ne
   attr(out, 'C') <- C
   attr(out, 'u') <- u
