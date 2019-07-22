@@ -125,8 +125,8 @@ A `summary` method for class `pangenoneSimulation` is also provided:
 ```{r, summary}
 spg <- summary(pg)
 
-# Coalescent times
-brln <- spg$Branching_length
+# Coalescence times
+brln <- spg$Coal_times
 plot(brln); abline(0, 1)
 
 # Gene family frequency

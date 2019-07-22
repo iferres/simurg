@@ -28,7 +28,7 @@ summary.pangenomeSimulation <- function(object, ...){
 
   cat('Summary of object of class pangenomeSimulation:\n\n')
   attrs <- attributes(object)
-  ret <- list(Branching_length = NULL, Gene_family_frecuency = NULL, Evo_dist = NULL)
+  ret <- list(Coal_times = NULL, Gene_family_frecuency = NULL, Evo_dist = NULL)
 
   cat('** Coalescent ** \n')
   phy <- object$coalescent
@@ -37,7 +37,7 @@ summary.pangenomeSimulation <- function(object, ...){
   br <- attrs$br
   exp_br <- 2 / ( seq(norg, 2, -1) * (seq(norg, 2, -1) - 1) )
   brln <- data.frame(Expected = exp_br, Observed = br)
-  ret$Branching_length <- brln
+  ret$Coal_times <- brln
   cat(' # Coalescent times [ Expected calculated as 2/(i * (i -1)) ]:\n')
 
   str(brln)
