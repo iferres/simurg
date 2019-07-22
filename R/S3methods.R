@@ -38,7 +38,8 @@ summary.pangenomeSimulation <- function(object, ...){
   exp_br <- 2 / ( seq(norg, 2, -1) * (seq(norg, 2, -1) - 1) )
   brln <- data.frame(Expected = exp_br, Observed = br)
   ret$Branching_length <- brln
-  cat(' # Coalescent times:')
+  cat(' # Coalescent times [ Expected calculated as 2/(i * (i -1)) ]:')
+
   str(brln)
   cat('\n')
 
