@@ -271,6 +271,12 @@ simpg <- function(ref='pan_genome_reference.fa',
   # cat('Simulating coalescent tree.\n')
   if (missing(br)){
     br <- rexp(norg - 1, choose(seq(norg, 2, -1), 2))
+    if (verbose){
+      mssg1 <- ' Simulated branch lengths:'
+      mssg2 <- paste(br, collapse = ' ')
+      mssg <- c(mssg1, mssg2)
+      message(paste(mssg, collapse = '\n'))
+    }
   }else{
     if (!is.numeric(br)) stop('br is not numeric')
     if (length(br)!= (norg - 1)) stop('br should be of length norg - 1')
@@ -321,7 +327,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     mssg6 <- paste(' Derived from parameters:')
     mssg7 <- paste(' # \u03F4 = 2Ne', '\u03C5 =', theta)
     mssg8 <- paste(' # \u03C1 = 2Ne', '\u03BD =', rho)
-    mssg9 <- paste(' # Theorical (expected) MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
+    mssg9 <- paste(' # Theoretical (expected) MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
     mssg10 <- paste(' # Simulated (observed) MRCA size: C + Poi(\u03F4 / \u03C1) = ', C+mrca_acc_o)
     mssg <- c(mssg1, mssg2, mssg3, mssg4, mssg5,
               mssg6, mssg7, mssg8, mssg9, mssg10)

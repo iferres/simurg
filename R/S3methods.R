@@ -67,7 +67,7 @@ summary.pangenomeSimulation <- function(object, ...){
   mssg6 <- paste(' Derived from parameters:')
   mssg7 <- paste(' # \u03F4 = 2Ne', '\u03C5 =', theta)
   mssg8 <- paste(' # \u03C1 = 2Ne', '\u03BD =', rho)
-  mssg9 <- paste(' # Theorical MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
+  mssg9 <- paste(' # Theoretical MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
   mssg10 <- paste(' # Simulated MRCA size: C + Poi(\u03F4 / \u03C1) = ', C+mrca_acc_o)
   mssg11 <- paste(' # Expected pangenome size: E[G] = C + \u03F4 * sum( 1 / (\u03C1 + 0:',norg-1,') ) = ',format(EG), sep = '')
   mssg12 <- paste(' # Observed pangenome size: dim( *$panmatrix )[2] =', dpm[2])
