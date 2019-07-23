@@ -21,7 +21,7 @@ Imports:
 Depends:
   R (>= 3.3.1),
   ape
-License: MIT + file LICENSE
+License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
