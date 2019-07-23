@@ -1,18 +1,22 @@
-q---
+---
 title: "Simulate a bacterial pangenome"
 author: Ignacio Ferres
-date: "`r Sys.Date()`"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Simulate_a_bacterial_pangenome}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.height = 7,
+  fig.width = 7,
+  fig.retina = 1, 
+  dpi = 72
 )
 ```
 This package provides a function to simulate a bacterial pangenome in accordance to the neutral model of mutation, as well as the infinitely many genes model for accessory gene gain and loss proceses. It first generates a random ultrametric tree with as many tips as user defines. Then a process of gene gain and loss is simulated mimicking the Infinitely Many Genes (IMG) model, and obtaining at the end of this step a panmatrix describing the gene presence/absence frequencies at the final time (sampling time). As many genes as columns in the final panmatrix are sampled from a reference multi-fasta file, and each one becomes the most recent common ancestor of each gene family at final time. These gene families will have the presence/absence frequency described in the panmatrix, and each individual gene will follow an evolutionary (mutation) path from the time of gene birth, to the final time, at a given constant rate of substitution and a transition matrix. More details of the algorithm are described in the documentation.
