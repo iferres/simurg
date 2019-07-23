@@ -138,9 +138,9 @@ follow an independent evolutionary path.
 }
 \examples{
 \dontrun{
-library(simba)
+library(simurg)
 
-ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simurg')
 untar(tarfile = ref_file)
 ref <- 'ref_tutorial.fasta'
 

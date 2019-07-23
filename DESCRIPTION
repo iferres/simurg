@@ -1,6 +1,6 @@
-Package: simba
+Package: simurg
 Version: 0.1.1
-Title: Simulate Bacterial Pangenomes
+Title: simurg: Simulate Bacterial Pangenomes
 Description: This package is intended to simulate a bacterial pangenome, given
     an initial MRCA, a number of generations, a substitution rate, a gene gain and 
     gene loss rate, and a coalescent tree. Mutations are simulated according to a

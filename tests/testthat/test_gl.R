@@ -28,7 +28,7 @@ m$length <- phy$edge.length
 depth <- coalescent.intervals(phy)$total.depth
 brti <- c(structure(rep(0, norg), names=1:norg), branching.times(phy))
 
-pm <- simba:::.sim_gl(phy = phy,
+pm <- simurg:::.sim_gl(phy = phy,
                        m = m,
                        brti = brti,
                        ne = ne,

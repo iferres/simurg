@@ -1,4 +1,4 @@
 library(testthat)
-library(simba)
+library(simurg)
 
-test_check("simba")
+test_check("simurg")

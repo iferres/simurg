@@ -28,11 +28,11 @@ First load the package to the R session:
 
 ```{r setup}
 # Load package..
-library(simba)
+library(simurg)
 ```
 
 
-(package) provides a single function , `simpg()`, and some methods associated to the output class. To access the documentation, run:
+`simurg` provides a single function , `simpg()`, and some methods associated to the output class. To access the documentation, run:
 ```{r help, eval=FALSE}
 ?simpg
 # or
@@ -43,7 +43,7 @@ This function needs a reference multi-fasta file from where to sample the genes 
 
 ```{r decompress}
 wd <- tempdir() # Set the directory where to decompress to /tmp/
-tgz <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+tgz <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simurg')
 untar(tarfile = tgz, exdir = wd)
 ref <- list.files(path = wd, pattern = 'ref_tutorial[.]fasta$', full.names = TRUE)
 ref

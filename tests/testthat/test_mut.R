@@ -21,7 +21,7 @@ depth <- coalescent.intervals(phy)$total.depth
 brti <- c(structure(rep(0, norg), names=1:norg), branching.times(phy))
 ne <- 1e10
 mu <- 5e-12
-smat <- simba:::.codon.subst.mat
+smat <- simurg:::.codon.subst.mat
 
 pm <- structure(c(0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1,
                   0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0,
@@ -258,7 +258,7 @@ pm <- structure(c(0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1,
 
 nsites <- rep(100, dim(pm)[2])
 
-muts <- simba:::.sim_mut(pm = pm,
+muts <- simurg:::.sim_mut(pm = pm,
                          phy = phy,
                          nsites = nsites,
                          m = m,

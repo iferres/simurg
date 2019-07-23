@@ -132,9 +132,9 @@
 #'
 #' @examples
 #' \dontrun{
-#' library(simba)
+#' library(simurg)
 #'
-#' ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+#' ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simurg')
 #' untar(tarfile = ref_file)
 #' ref <- 'ref_tutorial.fasta'
 #'
@@ -145,7 +145,7 @@
 #' summary(pg)
 #' }
 #' @importFrom seqinr read.fasta write.fasta
-#' @importFrom stats rpois setNames
+#' @importFrom stats rpois rexp setNames
 #' @importFrom ape rcoal coalescent.intervals branching.times dist.dna as.DNAbin
 #' @importFrom phangorn Descendants
 #' @importFrom utils txtProgressBar setTxtProgressBar capture.output str
