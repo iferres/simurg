@@ -47,9 +47,9 @@ ref
 
 Now we are ready to run a simulation:
 ````{r simulation, results = 'hide'}
-set.seed(555)
+set.seed(123)
 pg <- simpg(ref = ref, # Reference multi-fasta file
-            norg = 10, # Number of organisms to sample
+            norg = 20, # Number of organisms to sample
             ne = 1e11, # Number of generations from MRCA
             C = 100,  # Core genome size
             u = 1e-8, # Probability of gene gain, per generation
@@ -109,7 +109,8 @@ nodelabels()
 ### Distances
 The last field is a list with genetic distances between all pairs of sequences on each gene family.
 ```{r, distances}
-head(pg$distances, n = 2)
+length(pg$distances)
+pg$distances[['gene1']]
 ```
 
 ### Sequences folder
@@ -127,7 +128,10 @@ spg <- summary(pg)
 
 # Coalescence times
 brln <- spg$Coal_times
-plot(brln); abline(0, 1)
+plot(brln, 
+     xlab = 'Expected coalescence time', 
+     ylab = 'Simulated coalescence times') 
+abline(0, 1)
 
 # Gene family frequency
 freqs <- spg$Gene_family_frequency
