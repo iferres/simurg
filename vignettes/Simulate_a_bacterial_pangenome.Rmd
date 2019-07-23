@@ -126,11 +126,12 @@ A `summary` method for class `pangenoneSimulation` is also provided:
 ```{r, summary}
 spg <- summary(pg)
 
-# Coalescence times
+# Coalescence times (log transform)
 brln <- spg$Coal_times
-plot(brln, 
-     xlab = 'Expected coalescence time', 
-     ylab = 'Simulated coalescence times') 
+plot(log(brln), 
+     xlab = 'Expected coalescence times (log)', 
+     ylab = 'Simulated coalescence times (log)') 
+#Expect some dispersion at the begining, but correlation towards the end..
 abline(0, 1)
 
 # Gene family frequency
@@ -144,6 +145,7 @@ plot(x = dis$norm_cophenetic,
      y = dis$mean_gene_dist, 
      xlim = c(0, 1), xlab = 'Normalized cophenetic distances',
      ylim = c(0, 1), ylab = 'Mean genetic distances')
+#Expect saturation towards the end..
 abline(0, 1)
 ```
 
