@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.org/iferres/simurg.svg?branch=master)](https://travis-ci.org/iferres/simurg)
+<!-- badges: end -->
+
 # simurg: Simulate a Bacterial Pangenome in R
 
 This R package is intended to produce simulated pangenomes using reference sequences as starting point (MRCA), and both Neutral and Infinitely Many Genes (IMG) models to produce changes along branches of a simulated coalescent tree.
