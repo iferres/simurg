@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 .Rbuildignore
+inst/doc
+doc
+Meta

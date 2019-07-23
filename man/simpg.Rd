@@ -4,18 +4,28 @@
 \alias{simpg}
 \title{Simulate a bacterial pangenome}
 \usage{
-simpg(ref = "pan_genome_reference.fa", norg = 10, ne = 1e+11,
+simpg(ref = "pan_genome_reference.fa", norg = 10, br, ne = 1e+11,
   C = 100, u = 1e-08, v = 1e-11, mu = 5e-12, write_by = "gene",
   dir_out = "sim_pg", replace = FALSE, smat, force = FALSE,
   verbose = TRUE)
 }
 \arguments{
-\item{ref}{A multi-fasta file from where to sample genes.}
+\item{ref}{A multi-fasta file from where to sample genes. Each fasta header
+is expected to identify a single gene. Each sampled gene is taken as the
+most recent common ancestor of each gene family sampled at the end of the
+simulation (final time); in other words, each gene family will coalesce to
+each of the original genes sampled from this file.}
 
-\item{norg}{The number of organisms sampled.}
+\item{norg}{The number of organisms sampled at final time.}
 
-\item{ne}{Effective population number. Baumdicker et al. (2012) estimates
-the effective population sizes of Prochlorococcus and Synechococcus to be
+\item{br}{\code{numeric} vector of length \code{norg - 1} for setting the
+coalescent branch lengths. By default is calculated as:
+\code{rexp( norg - 1, choose(seq(norg, 2, -1), 2) )}
+as expected by the coalescent theory (see Wakeley, 2008 "Coalescent Theory:
+An Introduction". Roberts & Company Publishers).}
+
+\item{ne}{Effective population size. Baumdicker et al. (2012) estimates
+the effective population sizes of \emph{Prochlorococcus} and \emph{Synechococcus} to be
 around 10e11, which was taken as default. This is also the number of
 generations from the MRCA to the sampled (final) organisms.}
 
@@ -23,11 +33,11 @@ generations from the MRCA to the sampled (final) organisms.}
 
 \item{u}{Probability of gene gain per generation. Default is 1e-8, to be in
 accordance to values presented in Baumdicker et al. (2012). (theta = 2Ne*u,
-and taking Ne = 10e11, and estimates of theta ~2000 for Prochlorococcus).}
+and taking Ne = 10e11, and estimates of theta ~2000 for \emph{Prochlorococcus}).}
 
 \item{v}{Probability of gene loss rate per generation. Default is 1e-11, to
 be in accordance to values presented in Baumdicker et al. (2012). (rho = 2Ne*v,
-and taking Ne = 10e11, and estimates of rho ~2 for Prochlorococcus).}
+and taking Ne = 10e11, and estimates of rho ~2 for \emph{Prochlorococcus}).}
 
 \item{mu}{The per site per generation substitution rate. According to Duchene
 et al. (2016), a typical substitution rate is around 1e-5 and 1e-9 per site,
@@ -68,23 +78,27 @@ existing content.}
 }
 \value{
 An object of class \code{pangenomeSimulation}, which consist in a
-list of 4 elements: (1) The simulated coalescent, as an object of class
+list of 5 elements: (1) The simulated coalescent, as an object of class
 \link[ape:read.tree]{phylo} (ape package); (2) A list with gene families;
-(3) The panmatrix; and (4) a list with substitution codon position for each
-gene, per branch, since gene birth to sampling time. Also a series of
-attributes are returned, with calling parameters. A summary method is also
-provided to retrieve statistics from the simulation.
+(3) The panmatrix; (4) a list with substitution codon position for each
+gene, per branch, since gene birth to sampling time, and (5) a list of
+genetic distances, for each gene family. Also a series of attributes are
+returned, with calling parameters. A summary method is also provided to
+retrieve statistics from the simulation.
 }
 \description{
-Simulate the evolution of a pangenome using a random coalescent
-tree as guide, according to the neutral model and the Infinitely Many Genes
-(IMG) model.
-The algorithm first simulates a random coalescent tree (\link[ape]{rcoal})
+Simulate the evolution of a pangenome using a random ultrametric
+tree as guide to resemble a coalescent process, and according to both the
+neutral model (mutations) and the Infinitely Many Genes (IMG) model (gene
+presence/absence).
+}
+\details{
+The algorithm first simulates a random ultrametric tree (\link[ape]{rcoal})
 describing the evolutionary history of organisms sampled at the final time.
 Effective population size (ne) is also interpreted as the number of
 generations from the MRCA to the sampling time.
 
-Then, a IMG process is simulated using this tree, and parameters C (coregenome
+A IMG process is simulated using this tree, and parameters C (coregenome
 size), u (probability of gene gain, per generation), and v (probability of
 gene loss, per generation). At the end of this process a final panmatrix is
 obtained, describing the presence or absence of each gene for each organism,
@@ -124,9 +138,9 @@ follow an independent evolutionary path.
 }
 \examples{
 \dontrun{
-library(simba)
+library(simurg)
 
-ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simurg')
 untar(tarfile = ref_file)
 ref <- 'ref_tutorial.fasta'
 
@@ -153,6 +167,9 @@ Ashley Robinson, D., Falush, D. Fiel, E. J. (2010). "Bacterial Population
 Genetics in Infectious Disease." Wiley-Blackwell, Chapter 1: "The Coalescent
 of Bacterial Populations"; Section 1.5; Schierup, M. H. & Wiuf, C. "From
 Coalescent Time to Real Time".
+
+Jukes, T. H., Cantor, C. R. (1969). "Evolution of Protein Molecules". New
+York: Academic Press.
 
 Kimura, M. (1983). "The neutral theory of molecular evolution". Cambridge.
 }

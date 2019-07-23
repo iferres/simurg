@@ -1,14 +1,17 @@
 #' @name simpg
 #' @title Simulate a bacterial pangenome
-#' @description Simulate the evolution of a pangenome using a random coalescent
-#' tree as guide, according to the neutral model and the Infinitely Many Genes
-#' (IMG) model.
-#' The algorithm first simulates a random coalescent tree (\link[ape]{rcoal})
+#' @description Simulate the evolution of a pangenome using a random ultrametric
+#' tree as guide to resemble a coalescent process, and according to both the
+#' neutral model (mutations) and the Infinitely Many Genes (IMG) model (gene
+#' presence/absence).
+#'
+#' @details
+#' The algorithm first simulates a random ultrametric tree (\link[ape]{rcoal})
 #' describing the evolutionary history of organisms sampled at the final time.
 #' Effective population size (ne) is also interpreted as the number of
 #' generations from the MRCA to the sampling time.
 #'
-#' Then, a IMG process is simulated using this tree, and parameters C (coregenome
+#' A IMG process is simulated using this tree, and parameters C (coregenome
 #' size), u (probability of gene gain, per generation), and v (probability of
 #' gene loss, per generation). At the end of this process a final panmatrix is
 #' obtained, describing the presence or absence of each gene for each organism,
@@ -46,19 +49,28 @@
 #' available genes in ref), although if it is set to TRUE, each copy will
 #' follow an independent evolutionary path.
 #'
-#' @param ref A multi-fasta file from where to sample genes.
-#' @param norg The number of organisms sampled.
-#' @param ne Effective population number. Baumdicker et al. (2012) estimates
-#' the effective population sizes of Prochlorococcus and Synechococcus to be
+#' @param ref A multi-fasta file from where to sample genes. Each fasta header
+#' is expected to identify a single gene. Each sampled gene is taken as the
+#' most recent common ancestor of each gene family sampled at the end of the
+#' simulation (final time); in other words, each gene family will coalesce to
+#' each of the original genes sampled from this file.
+#' @param norg The number of organisms sampled at final time.
+#' @param br \code{numeric} vector of length \code{norg - 1} for setting the
+#' coalescent branch lengths. By default is calculated as:
+#' \code{rexp( norg - 1, choose(seq(norg, 2, -1), 2) )}
+#' as expected by the coalescent theory (see Wakeley, 2008 "Coalescent Theory:
+#' An Introduction". Roberts & Company Publishers).
+#' @param ne Effective population size. Baumdicker et al. (2012) estimates
+#' the effective population sizes of \emph{Prochlorococcus} and \emph{Synechococcus} to be
 #' around 10e11, which was taken as default. This is also the number of
 #' generations from the MRCA to the sampled (final) organisms.
 #' @param C The coregenome size (default is 100).
 #' @param u Probability of gene gain per generation. Default is 1e-8, to be in
 #' accordance to values presented in Baumdicker et al. (2012). (theta = 2Ne*u,
-#' and taking Ne = 10e11, and estimates of theta ~2000 for Prochlorococcus).
+#' and taking Ne = 10e11, and estimates of theta ~2000 for \emph{Prochlorococcus}).
 #' @param v Probability of gene loss rate per generation. Default is 1e-11, to
 #' be in accordance to values presented in Baumdicker et al. (2012). (rho = 2Ne*v,
-#' and taking Ne = 10e11, and estimates of rho ~2 for Prochlorococcus).
+#' and taking Ne = 10e11, and estimates of rho ~2 for \emph{Prochlorococcus}).
 #' @param mu The per site per generation substitution rate. According to Duchene
 #' et al. (2016), a typical substitution rate is around 1e-5 and 1e-9 per site,
 #' per annum. Taking 1e-9, and assuming 200 generation per annum (Shierup and Wuif,
@@ -90,12 +102,13 @@
 #' existing content.
 #' @param verbose \code{logical}. Show (or not) progress messages.
 #' @return An object of class \code{pangenomeSimulation}, which consist in a
-#' list of 4 elements: (1) The simulated coalescent, as an object of class
+#' list of 5 elements: (1) The simulated coalescent, as an object of class
 #' \link[ape:read.tree]{phylo} (ape package); (2) A list with gene families;
-#' (3) The panmatrix; and (4) a list with substitution codon position for each
-#' gene, per branch, since gene birth to sampling time. Also a series of
-#' attributes are returned, with calling parameters. A summary method is also
-#' provided to retrieve statistics from the simulation.
+#' (3) The panmatrix; (4) a list with substitution codon position for each
+#' gene, per branch, since gene birth to sampling time, and (5) a list of
+#' genetic distances, for each gene family. Also a series of attributes are
+#' returned, with calling parameters. A summary method is also provided to
+#' retrieve statistics from the simulation.
 #' @references Baumdicker, F., Hess, W. R., & Pfaffelhuber, P. (2010). "The
 #' Diversity of a Distributed Genome in Bacterial Populations". The Annals of
 #' Applied Probability.
@@ -112,13 +125,16 @@
 #' of Bacterial Populations"; Section 1.5; Schierup, M. H. & Wiuf, C. "From
 #' Coalescent Time to Real Time".
 #'
+#' Jukes, T. H., Cantor, C. R. (1969). "Evolution of Protein Molecules". New
+#' York: Academic Press.
+#'
 #' Kimura, M. (1983). "The neutral theory of molecular evolution". Cambridge.
 #'
 #' @examples
 #' \dontrun{
-#' library(simba)
+#' library(simurg)
 #'
-#' ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simba')
+#' ref_file <- system.file('extdata', 'ref_tutorial.tar.gz', package = 'simurg')
 #' untar(tarfile = ref_file)
 #' ref <- 'ref_tutorial.fasta'
 #'
@@ -129,7 +145,7 @@
 #' summary(pg)
 #' }
 #' @importFrom seqinr read.fasta write.fasta
-#' @importFrom stats rpois setNames
+#' @importFrom stats rpois rexp setNames
 #' @importFrom ape rcoal coalescent.intervals branching.times dist.dna as.DNAbin
 #' @importFrom phangorn Descendants
 #' @importFrom utils txtProgressBar setTxtProgressBar capture.output str
@@ -138,6 +154,7 @@
 #' @export
 simpg <- function(ref='pan_genome_reference.fa',
                   norg=10,
+                  br,
                   ne = 1e11,
                   C = 100,
                   u = 1e-8,
@@ -252,7 +269,19 @@ simpg <- function(ref='pan_genome_reference.fa',
   ##############################
   if (verbose) message('Simulating coalescent tree, \u03C4')
   # cat('Simulating coalescent tree.\n')
-  phy <- rcoal(norg, tip.label = paste0('genome', 1:norg))
+  if (missing(br)){
+    br <- rexp(norg - 1, choose(seq(norg, 2, -1), 2))
+    if (verbose){
+      mssg1 <- ' Simulated branch lengths:'
+      mssg2 <- paste(br, collapse = ' ')
+      mssg <- c(mssg1, mssg2)
+      message(paste(mssg, collapse = '\n'))
+    }
+  }else{
+    if (!is.numeric(br)) stop('br is not numeric')
+    if (length(br)!= (norg - 1)) stop('br should be of length norg - 1')
+  }
+  phy <- rcoal(norg, tip.label = paste0('genome', 1:norg), br = br)
 
   m <- as.data.frame(phy$edge)
   m$length <- phy$edge.length
@@ -298,7 +327,7 @@ simpg <- function(ref='pan_genome_reference.fa',
     mssg6 <- paste(' Derived from parameters:')
     mssg7 <- paste(' # \u03F4 = 2Ne', '\u03C5 =', theta)
     mssg8 <- paste(' # \u03C1 = 2Ne', '\u03BD =', rho)
-    mssg9 <- paste(' # Theorical (expected) MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
+    mssg9 <- paste(' # Theoretical (expected) MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
     mssg10 <- paste(' # Simulated (observed) MRCA size: C + Poi(\u03F4 / \u03C1) = ', C+mrca_acc_o)
     mssg <- c(mssg1, mssg2, mssg3, mssg4, mssg5,
               mssg6, mssg7, mssg8, mssg9, mssg10)
@@ -522,6 +551,7 @@ simpg <- function(ref='pan_genome_reference.fa',
   # Add attributes
   attr(out, 'reference') <- normalizePath(ref)
   attr(out, 'norg') <- norg
+  attr(out, 'br') <- br
   attr(out, 'ne') <- ne
   attr(out, 'C') <- C
   attr(out, 'u') <- u

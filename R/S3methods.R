@@ -26,17 +26,25 @@ print.pangenomeSimulation <- function(x, ...){
 #' @export
 summary.pangenomeSimulation <- function(object, ...){
 
-  cat('Summary of object of class pangenomeSimulation:\n')
+  cat('Summary of object of class pangenomeSimulation:\n\n')
   attrs <- attributes(object)
-  ret <- list(Gene_family_frecuency = NULL, Evo_dist = NULL)
+  ret <- list(Coal_times = NULL, Gene_family_frecuency = NULL, Evo_dist = NULL)
 
+  cat('** Coalescent ** \n')
   phy <- object$coalescent
   summary(object$coalescent)
+  norg <- attrs$norg
+  br <- attrs$br
+  exp_br <- 2 / ( seq(norg, 2, -1) * (seq(norg, 2, -1) - 1) )
+  brln <- data.frame(Expected = exp_br, Observed = br)
+  ret$Coal_times <- brln
+  cat(' # Coalescent times [ Expected calculated as 2/(i * (i -1)) ]:\n')
+
+  str(brln)
   cat('\n')
 
   cat('** Infinitely Many Genes Model ** \n')
 
-  norg <- attrs$norg
   ne <- attrs$ne
   C <- attrs$C
   u <- attrs$u
@@ -67,7 +75,7 @@ summary.pangenomeSimulation <- function(object, ...){
   mssg6 <- paste(' Derived from parameters:')
   mssg7 <- paste(' # \u03F4 = 2Ne', '\u03C5 =', theta)
   mssg8 <- paste(' # \u03C1 = 2Ne', '\u03BD =', rho)
-  mssg9 <- paste(' # Theorical MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
+  mssg9 <- paste(' # Theoretical MRCA size: C + \u03F4 / \u03C1 = ', C+mrca_acc_t)
   mssg10 <- paste(' # Simulated MRCA size: C + Poi(\u03F4 / \u03C1) = ', C+mrca_acc_o)
   mssg11 <- paste(' # Expected pangenome size: E[G] = C + \u03F4 * sum( 1 / (\u03C1 + 0:',norg-1,') ) = ',format(EG), sep = '')
   mssg12 <- paste(' # Observed pangenome size: dim( *$panmatrix )[2] =', dpm[2])
@@ -80,7 +88,7 @@ summary.pangenomeSimulation <- function(object, ...){
   print(rs)
   cat('$Gene_family_frequency\n')
   fam_frec <- table(cs, dnn = NULL)
-  ret$IMG <- fam_frec
+  ret$Gene_family_frequency <- fam_frec
   print(fam_frec)
 
 
@@ -93,7 +101,7 @@ summary.pangenomeSimulation <- function(object, ...){
   mssg1 <- ' Parameters:'
   mssg2 <- paste(' # Probability of substitution,  \u03BC =', mu)
   mssg3 <- paste(' # Number of generations, Ne = ', ne)
-  mssg <- c(mssg1, mssg2, mssg4)
+  mssg <- c(mssg1, mssg2, mssg3)
 
   cat(paste(mssg, collapse = '\n'))
   cat('\n')
@@ -116,7 +124,7 @@ summary.pangenomeSimulation <- function(object, ...){
   coph <- coph / max(coph)
   df$norm_cophenetic <- apply(df, 1, function(x){coph[x[1], x[2]]})
   df$mean_gene_dist <- md
-  ret$Substitutions <- df
+  ret$Evo_dist <- df
   cat('$Evo_dist \n')
   str(df)
 
