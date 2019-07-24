@@ -28,7 +28,7 @@ help('simpg')
 
 ## Vignettes
 
-A [vignette](https://github.com/iferres/simurg.wiki.git) is also provided to learn more about this package. If you want to see it locally, you have to build it first when installing `simurg`:
+A [vignette](https://github.com/iferres/simurg/wiki) is also provided to learn more about this package. If you want to see it locally, you have to build it first when installing `simurg`:
 
 
 ```r
@@ -36,5 +36,5 @@ library(devtools)
 install_github('iferres/simurg', build_vignettes = TRUE)
 vignette('Simulate_a_bacterial_pangenome')
 ```
-Also, visit the [Wiki](https://github.com/iferres/simurg.wiki.git) page to see the vignette example.
+Also, visit the [Wiki](https://github.com/iferres/simurg/wiki) page to see the vignette example.
 
