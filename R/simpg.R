@@ -56,8 +56,7 @@
 #' each of the original genes sampled from this file.
 #' @param norg The number of organisms sampled at final time.
 #' @param br \code{numeric} vector of length \code{norg - 1} for setting the
-#' coalescent branch lengths. By default is calculated as:
-#' \code{rexp( norg - 1, choose(seq(norg, 2, -1), 2) )}
+#' coalescent branch lengths.
 #' as expected by the coalescent theory (see Wakeley, 2008 "Coalescent Theory:
 #' An Introduction". Roberts & Company Publishers).
 #' @param ne Effective population size. Baumdicker et al. (2012) estimates
@@ -270,7 +269,7 @@ simpg <- function(ref='pan_genome_reference.fa',
   if (verbose) message('Simulating coalescent tree, \u03C4')
   # cat('Simulating coalescent tree.\n')
   if (missing(br)){
-    br <- rexp(norg - 1, choose(seq(norg, 2, -1), 2))
+    br <- 2 * rexp(norg - 1)/(as.double(norg:2) * as.double((norg - 1):1))
     if (verbose){
       mssg1 <- ' Simulated branch lengths:'
       mssg2 <- paste(br, collapse = ' ')
