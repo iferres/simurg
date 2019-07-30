@@ -28,7 +28,7 @@ summary.pangenomeSimulation <- function(object, ...){
 
   cat('Summary of object of class pangenomeSimulation:\n\n')
   attrs <- attributes(object)
-  ret <- list(Coal_times = NULL, Gene_family_frecuency = NULL, Evo_dist = NULL)
+  ret <- list(Coal_times = NULL, Gene_family_frequency = NULL, Evo_dist = NULL)
 
   cat('** Coalescent ** \n')
   phy <- object$coalescent
